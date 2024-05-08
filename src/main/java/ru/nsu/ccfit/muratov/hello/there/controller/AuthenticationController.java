@@ -17,7 +17,7 @@ import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
 import java.util.Date;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 @Tag(name = "Authentication")
 public class AuthenticationController {
     @Autowired
@@ -40,7 +40,7 @@ public class AuthenticationController {
                     responseCode = "400"
             )
     })
-    @PostMapping("/users")
+    @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public RegistrationResponseDto registerNewUser(@RequestBody RegistrationRequestDto form) {
         //if(userRepository.ex)
@@ -73,12 +73,12 @@ public class AuthenticationController {
                     responseCode = "401"
             )
     })
-    @PostMapping("/session")
+    @PostMapping("/login")
     public void signIn(@RequestBody LoginDto dto) {
 
     }
 
-    @DeleteMapping("/session")
+    @DeleteMapping("/login")
     public void signOut() {
 
     }
