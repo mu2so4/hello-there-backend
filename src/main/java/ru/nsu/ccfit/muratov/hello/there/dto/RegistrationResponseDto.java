@@ -2,7 +2,7 @@ package ru.nsu.ccfit.muratov.hello.there.dto;
 
 import lombok.Builder;
 import lombok.Data;
-import ru.nsu.ccfit.muratov.hello.there.entity.User;
+import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 
 import java.util.Date;
 
@@ -16,7 +16,7 @@ public class RegistrationResponseDto {
     private Date registrationTime;
     private Date birthday;
 
-    public static RegistrationResponseDto createResponse(User user) {
+    public static RegistrationResponseDto createResponse(UserEntity user) {
         return RegistrationResponseDto.builder()
                 .userId(user.getUserId())
                 .username(user.getUsername())
