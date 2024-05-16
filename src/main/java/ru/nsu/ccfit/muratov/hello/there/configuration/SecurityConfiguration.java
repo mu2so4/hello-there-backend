@@ -10,23 +10,15 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfiguration {
-    //@Autowired
-    //private UserDetailsService userDetailsService;
-
-    /*public SecurityConfiguration(UserDetailsService userDetailsService){
-        this.userDetailsService = userDetailsService;
-    }*/
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
@@ -45,7 +37,8 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authorize) ->
                         authorize
-                                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                                .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .anyRequest().authenticated()
                                 /*.requestMatchers(HttpMethod.POST, "/api/users", "/api/session", "/session").permitAll()
                                 .requestMatchers( "/", "/swagger-ui/index.html").permitAll()

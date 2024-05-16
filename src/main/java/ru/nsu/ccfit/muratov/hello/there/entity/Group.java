@@ -18,5 +18,5 @@ public class Group {
 
     @ManyToOne
     @JoinColumn(name = "userId")
-    private User owner;
+    private UserEntity owner;
 }
