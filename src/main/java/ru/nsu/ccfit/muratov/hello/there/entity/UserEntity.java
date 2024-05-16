@@ -1,13 +1,11 @@
 package ru.nsu.ccfit.muratov.hello.there.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
-@Builder
 @Entity(name = "Users")
 public class UserEntity {
     @Id

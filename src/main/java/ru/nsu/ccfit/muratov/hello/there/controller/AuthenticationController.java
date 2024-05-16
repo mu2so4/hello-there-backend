@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +25,7 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping(value = "/api/auth", produces = "application/json")
 @Tag(name = "Authentication")
 public class AuthenticationController {
     @Autowired
@@ -54,15 +55,13 @@ public class AuthenticationController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public RegistrationResponseDto registerNewUser(@RequestBody RegistrationRequestDto form) {
-        //if(userRepository.ex)
-        UserEntity user = UserEntity.builder()
-                .username(form.getUsername())
-                .password(passwordEncoder.encode(form.getPassword()))
-                .firstName(form.getFirstName())
-                .lastName(form.getLastName())
-                .registrationTime(new Date())
-                .birthday(form.getBirthday())
-                .build();
+        UserEntity user = new UserEntity();
+        user.setUsername(form.getUsername());
+        user.setPassword(passwordEncoder.encode(form.getPassword()));
+        user.setFirstName(form.getFirstName());
+        user.setLastName(form.getLastName());
+        user.setRegistrationTime(new Date());
+        user.setBirthday(form.getBirthday());
         UserEntity savedUser = userRepository.save(user);
         return RegistrationResponseDto.createResponse(savedUser);
     }
@@ -78,19 +77,21 @@ public class AuthenticationController {
             @ApiResponse(
                     description = "Invalid credentials",
                     responseCode = "400"
-            )/*,
-            @ApiResponse(
-                    description = "Invalid credentials",
-                    responseCode = "401"
-            )*/
+            )
     })
     @PostMapping("/login")
     @ResponseStatus(code = HttpStatus.CREATED)
     public RegistrationResponseDto login(@RequestBody LoginDto dto) {
         String username = dto.getUsername();
         logger.info(() -> String.format("received login request for user \"%s\"", username));
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, dto.getPassword()));
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, dto.getPassword()));
+        }
+        catch(AuthenticationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserEntity user;
         user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("username not found"));
