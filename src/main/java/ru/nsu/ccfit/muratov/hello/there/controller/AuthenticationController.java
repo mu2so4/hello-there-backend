@@ -15,6 +15,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.configuration.JwtService;
+import ru.nsu.ccfit.muratov.hello.there.dto.AuthResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.LoginDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.RegistrationRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.RegistrationResponseDto;
@@ -32,6 +34,9 @@ public class AuthenticationController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private UserRepository userRepository;
@@ -81,7 +86,7 @@ public class AuthenticationController {
     })
     @PostMapping("/login")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public RegistrationResponseDto login(@RequestBody LoginDto dto) {
+    public AuthResponseDto login(@RequestBody LoginDto dto) {
         String username = dto.getUsername();
         logger.info(() -> String.format("received login request for user \"%s\"", username));
         Authentication authentication;
@@ -93,9 +98,8 @@ public class AuthenticationController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserEntity user;
-        user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("username not found"));
-        return RegistrationResponseDto.createResponse(user);
+        String token = jwtService.generateToken(authentication);
+        return new AuthResponseDto(token);
     }
 
     @DeleteMapping("/login")
