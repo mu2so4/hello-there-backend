@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.muratov.hello.there.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +12,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,8 +21,10 @@ import ru.nsu.ccfit.muratov.hello.there.dto.LoginDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.RegistrationRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.RegistrationResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.repository.RoleRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -40,6 +42,10 @@ public class AuthenticationController {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+
+    private static final String USER_ROLE_NAME = "USER";
 
     private static final Logger logger = Logger.getLogger(AuthenticationController.class.getCanonicalName());
 
@@ -54,7 +60,8 @@ public class AuthenticationController {
             ),
             @ApiResponse(
                     description = "Invalid form",
-                    responseCode = "400"
+                    responseCode = "400",
+                    content = @Content
             )
     })
     @PostMapping("/register")
@@ -67,6 +74,7 @@ public class AuthenticationController {
         user.setLastName(form.getLastName());
         user.setRegistrationTime(new Date());
         user.setBirthday(form.getBirthday());
+        user.setRoles(Collections.singleton(roleRepository.findByName(USER_ROLE_NAME)));
         UserEntity savedUser = userRepository.save(user);
         return RegistrationResponseDto.createResponse(savedUser);
     }
@@ -81,7 +89,8 @@ public class AuthenticationController {
             ),
             @ApiResponse(
                     description = "Invalid credentials",
-                    responseCode = "400"
+                    responseCode = "401",
+                    content = @Content
             )
     })
     @PostMapping("/login")

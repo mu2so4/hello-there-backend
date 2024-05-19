@@ -18,14 +18,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private UserRepository repository;
 
-    private final List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("USER"));
-
     private static final Logger logger = Logger.getLogger(UserDetailsServiceImpl.class.getCanonicalName());
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //buggy code below
         UserEntity user = repository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("username not found"));
-        return new User(user.getUsername(), user.getPassword(), authorities);
+        return new User(user.getUsername(), user.getPassword(), getAuthorities(user));
+    }
+
+    private static List<SimpleGrantedAuthority> getAuthorities(UserEntity user) {
+        return user.getRoles().stream().map((role) -> new SimpleGrantedAuthority(role.getName())).toList();
     }
 }
