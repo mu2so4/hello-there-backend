@@ -9,14 +9,14 @@ import java.util.Date;
 @Entity(name = "Groups")
 public class Group {
     @Id
-    @GeneratedValue
-    private int groupId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
-    private String groupName;
+    private String name;
     private String description;
     private Date createTime;
 
     @ManyToOne
-    @JoinColumn(name = "userId")
+    @JoinColumn(name = "ownerId")
     private UserEntity owner;
 }

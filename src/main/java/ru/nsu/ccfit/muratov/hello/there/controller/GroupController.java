@@ -5,11 +5,22 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import ru.nsu.ccfit.muratov.hello.there.dto.GroupCreateRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.GroupCreateResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
+import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
+import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
 
+import java.util.Date;
 import java.util.logging.Logger;
 
 @RestController
@@ -17,6 +28,11 @@ import java.util.logging.Logger;
 @Tag(name = "Group management")
 public class GroupController {
     private static final Logger logger = Logger.getLogger(GroupController.class.getCanonicalName());
+
+    @Autowired
+    private GroupRepository groupRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Operation(
             summary = "Fetch group list",
@@ -84,8 +100,16 @@ public class GroupController {
             )
     })
     @PostMapping
-    public Group createGroup(@RequestBody Group params) {
-        return params;
+    @ResponseStatus(code = HttpStatus.CREATED)
+    public GroupCreateResponseDto createGroup(@RequestBody GroupCreateRequestDto params, @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity owner = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        Group group = new Group();
+        group.setOwner(owner);
+        group.setCreateTime(new Date());
+        group.setName(params.getName());
+        group.setDescription(params.getDescription());
+        Group savedGroup = groupRepository.save(group);
+        return new GroupCreateResponseDto(savedGroup);
     }
 
 
