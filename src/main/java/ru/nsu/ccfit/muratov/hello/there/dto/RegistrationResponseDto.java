@@ -18,7 +18,7 @@ public class RegistrationResponseDto {
 
     public static RegistrationResponseDto createResponse(UserEntity user) {
         return RegistrationResponseDto.builder()
-                .userId(user.getUserId())
+                .userId(user.getId())
                 .username(user.getUsername())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())

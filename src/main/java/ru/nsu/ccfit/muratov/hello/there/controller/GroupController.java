@@ -1,16 +1,23 @@
 package ru.nsu.ccfit.muratov.hello.there.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
+
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/groups")
 @Tag(name = "Group management")
 public class GroupController {
+    private static final Logger logger = Logger.getLogger(GroupController.class.getCanonicalName());
+
     @Operation(
             summary = "Fetch group list",
             description = "Get all groups of the social network"
@@ -22,7 +29,8 @@ public class GroupController {
             ),
             @ApiResponse(
                     description = "Unauthorized",
-                    responseCode = "401"
+                    responseCode = "401",
+                    content = @Content
             )
 
     })
@@ -51,8 +59,9 @@ public class GroupController {
             )
     })
     @GetMapping("/{groupId}")
-    public void getGroupById(@PathVariable String groupId) {
-        System.out.println(groupId);
+    public void getGroupById(@PathVariable String groupId, Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        logger.info(() -> String.format("request from user: %s", user));
     }
 
 
