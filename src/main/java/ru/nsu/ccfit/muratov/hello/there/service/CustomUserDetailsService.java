@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.configuration;
+package ru.nsu.ccfit.muratov.hello.there.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.logging.Logger;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
     private UserRepository repository;
 
-    private static final Logger logger = Logger.getLogger(UserDetailsServiceImpl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(CustomUserDetailsService.class.getCanonicalName());
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
