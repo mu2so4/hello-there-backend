@@ -5,16 +5,16 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.GroupCreateRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.dto.GroupCreateResponseDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.GroupDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
@@ -75,9 +75,14 @@ public class GroupController {
             )
     })
     @GetMapping("/{groupId}")
-    public void getGroupById(@PathVariable String groupId, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        logger.info(() -> String.format("request from user: %s", user));
+    public GroupDto getGroupById(@PathVariable int groupId) {
+        try {
+            Group group = groupRepository.getReferenceById(groupId);
+            return new GroupDto(group);
+        }
+        catch(EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "group not found");
+        }
     }
 
 
@@ -101,7 +106,7 @@ public class GroupController {
     })
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public GroupCreateResponseDto createGroup(@RequestBody GroupCreateRequestDto params, @AuthenticationPrincipal UserDetails userDetails) {
+    public GroupDto createGroup(@RequestBody GroupCreateRequestDto params, @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity owner = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
         Group group = new Group();
         group.setOwner(owner);
@@ -109,7 +114,7 @@ public class GroupController {
         group.setName(params.getName());
         group.setDescription(params.getDescription());
         Group savedGroup = groupRepository.save(group);
-        return new GroupCreateResponseDto(savedGroup);
+        return new GroupDto(savedGroup);
     }
 
 
