@@ -72,12 +72,19 @@ public class GroupController {
             @ApiResponse(
                     description = "Group not found",
                     responseCode = "404"
+            ),
+            @ApiResponse(
+                    description = "Group was deleted",
+                    responseCode = "410"
             )
     })
     @GetMapping("/{groupId}")
     public GroupDto getGroupById(@PathVariable int groupId) {
         try {
             Group group = groupRepository.getReferenceById(groupId);
+            if(group.isDeleted()) {
+                throw new ResponseStatusException(HttpStatus.GONE, "Group was deleted");
+            }
             return new GroupDto(group);
         }
         catch(EntityNotFoundException e) {
@@ -159,6 +166,10 @@ public class GroupController {
                     responseCode = "204"
             ),
             @ApiResponse(
+                    description = "Bad group ID",
+                    responseCode = "400"
+            ),
+            @ApiResponse(
                     description = "Unauthorized",
                     responseCode = "401"
             ),
@@ -167,12 +178,34 @@ public class GroupController {
                     responseCode = "403"
             ),
             @ApiResponse(
-                    description = "Group not found or already deleted",
+                    description = "Group not found",
                     responseCode = "404"
+            ),
+            @ApiResponse(
+                    description = "Group already deleted",
+                    responseCode = "410"
             )
     })
     @DeleteMapping("/{groupId}")
-    public void updateGroup(@PathVariable("groupId") String groupId) {
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void updateGroup(@PathVariable("groupId") int groupId, @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity auth = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        Group group = groupRepository.getReferenceById(groupId);;
+        UserEntity owner;
+        try {
+            owner = group.getOwner();
+            if(group.isDeleted()) {
+                throw new ResponseStatusException(HttpStatus.GONE, "Group already deleted");
+            }
+        }
+        catch(EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+        }
 
+        if(owner.getId() != auth.getId()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an owner of the group");
+        }
+        group.setDeleted(true);
+        groupRepository.save(group);
     }
 }

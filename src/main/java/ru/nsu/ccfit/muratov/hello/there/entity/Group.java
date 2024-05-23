@@ -15,6 +15,7 @@ public class Group {
     private String name;
     private String description;
     private Date createTime;
+    private boolean isDeleted;
 
     @ManyToOne
     @JoinColumn(name = "ownerId")
