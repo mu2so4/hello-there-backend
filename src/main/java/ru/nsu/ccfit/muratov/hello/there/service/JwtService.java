@@ -50,7 +50,8 @@ public class JwtService {
             return true;
         }
         catch(Exception e) {
-            throw new AuthenticationCredentialsNotFoundException("JWT expired or invalid", e);
+            //throw new AuthenticationCredentialsNotFoundException("JWT expired or invalid", e);
+            return false;
         }
     }
 

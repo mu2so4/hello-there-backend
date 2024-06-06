@@ -134,7 +134,6 @@ public class AuthenticationController {
     @DeleteMapping(value = "/logout")
     public void logout(HttpServletRequest request) {
         String token = JwtAuthFilter.getJwtFromRequest(request);
-        logger.info(() -> "revoked token " + token);
         tokenBlacklist.addToBlacklist(token);
     }
 }
