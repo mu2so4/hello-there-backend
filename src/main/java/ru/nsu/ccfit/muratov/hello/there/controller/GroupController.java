@@ -7,6 +7,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +26,7 @@ import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
 
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Logger;
 
 @RestController
@@ -34,6 +39,9 @@ public class GroupController {
     private GroupRepository groupRepository;
     @Autowired
     private UserRepository userRepository;
+
+    @Value("${data.group.page.size}")
+    private int pageSize;
 
     @Operation(
             summary = "Fetch group list",
@@ -52,8 +60,10 @@ public class GroupController {
 
     })
     @GetMapping
-    public void getAllGroups() {
-        //todo something
+    public List<GroupDto> getAllGroups(@RequestParam(defaultValue = "1") int page) {
+        int internalPageNumber = page - 1;
+        Pageable pageable = PageRequest.of(internalPageNumber, pageSize, Sort.by("id"));
+        return groupRepository.findAll(pageable).stream().map(GroupDto::new).toList();
     }
 
 
