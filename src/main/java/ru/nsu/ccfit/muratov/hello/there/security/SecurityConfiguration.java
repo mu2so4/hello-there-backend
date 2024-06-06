@@ -56,11 +56,12 @@ public class SecurityConfiguration {
                 .sessionManagement((authorize) ->
                         authorize.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic(Customizer.withDefaults())
+                .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
+                //.logout((logout) -> logout.logoutUrl("/api/auth/logout"));
                 /*.formLogin(form ->
                         form.loginPage("/session")
                         .permitAll());*/
-        http.addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.security.JwtAuthFilter;
+import ru.nsu.ccfit.muratov.hello.there.security.TokenBlacklist;
 import ru.nsu.ccfit.muratov.hello.there.service.JwtService;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.AuthResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.LoginDto;
@@ -29,7 +32,7 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 @RestController
-@RequestMapping(value = "/api/auth", produces = "application/json")
+@RequestMapping(value = "/api/auth")
 @Tag(name = "Authentication")
 public class AuthenticationController {
     @Autowired
@@ -39,6 +42,8 @@ public class AuthenticationController {
 
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private TokenBlacklist tokenBlacklist;
 
     @Autowired
     private UserRepository userRepository;
@@ -64,7 +69,7 @@ public class AuthenticationController {
                     content = @Content
             )
     })
-    @PostMapping("/register")
+    @PostMapping(value = "/register", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
     public RegistrationResponseDto registerNewUser(@RequestBody RegistrationRequestDto form) {
         UserEntity user = new UserEntity();
@@ -93,7 +98,7 @@ public class AuthenticationController {
                     content = @Content
             )
     })
-    @PostMapping("/login")
+    @PostMapping(value = "/login", produces = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
     public AuthResponseDto login(@RequestBody LoginDto dto) {
         String username = dto.getUsername();
@@ -111,7 +116,25 @@ public class AuthenticationController {
         return new AuthResponseDto(token);
     }
 
-    @DeleteMapping("/login")
-    public void logout() {
+    @Operation(
+            summary = "Logout user",
+            description = "Invalidates their JWT"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    description = "Success",
+                    responseCode = "204"
+            ),
+            @ApiResponse(
+                    description = "Invalid credentials",
+                    responseCode = "401",
+                    content = @Content
+            )
+    })
+    @DeleteMapping(value = "/logout")
+    public void logout(HttpServletRequest request) {
+        String token = JwtAuthFilter.getJwtFromRequest(request);
+        logger.info(() -> "revoked token " + token);
+        tokenBlacklist.addToBlacklist(token);
     }
 }
