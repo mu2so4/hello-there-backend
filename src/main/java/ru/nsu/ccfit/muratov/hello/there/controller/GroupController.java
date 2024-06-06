@@ -13,8 +13,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import ru.nsu.ccfit.muratov.hello.there.dto.GroupCreateRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.dto.GroupDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
@@ -152,8 +153,38 @@ public class GroupController {
             )
     })
     @PatchMapping("/{groupId}")
-    public Group updateGroup(@PathVariable("groupId") String groupId, @RequestBody Group newParams) {
-        return newParams;
+    public GroupDto updateGroup(@PathVariable int groupId, @RequestBody GroupUpdateRequestDto newParams, @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity auth = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        Group group = groupRepository.getReferenceById(groupId);
+        UserEntity owner;
+        try {
+            owner = group.getOwner();
+            if(group.isDeleted()) {
+                throw new ResponseStatusException(HttpStatus.GONE, "Group was deleted");
+            }
+        }
+        catch(EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+        }
+
+        if(owner.getId() != auth.getId()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an owner of the group");
+        }
+        boolean isEmpty = true;
+        String newName = newParams.getName();
+        String newDescription = newParams.getDescription();
+        if(newName != null) {
+            isEmpty = false;
+            group.setName(newName);
+        }
+        if(newDescription != null) {
+            isEmpty = false;
+            group.setDescription(newDescription);
+        }
+        if(isEmpty) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty update request received");
+        }
+        return new GroupDto(groupRepository.save(group));
     }
 
     @Operation(
@@ -190,7 +221,7 @@ public class GroupController {
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void updateGroup(@PathVariable("groupId") int groupId, @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity auth = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
-        Group group = groupRepository.getReferenceById(groupId);;
+        Group group = groupRepository.getReferenceById(groupId);
         UserEntity owner;
         try {
             owner = group.getOwner();

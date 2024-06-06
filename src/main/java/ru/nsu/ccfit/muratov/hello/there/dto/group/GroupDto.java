@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.dto;
+package ru.nsu.ccfit.muratov.hello.there.dto.group;
 
 import lombok.Data;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
