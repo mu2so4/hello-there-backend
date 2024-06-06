@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.dto;
+package ru.nsu.ccfit.muratov.hello.there.dto.auth;
 
 import lombok.Builder;
 import lombok.Data;
