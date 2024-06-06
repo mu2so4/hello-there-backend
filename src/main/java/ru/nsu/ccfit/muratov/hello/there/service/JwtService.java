@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.configuration;
+package ru.nsu.ccfit.muratov.hello.there.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

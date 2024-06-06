@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.configuration;
+package ru.nsu.ccfit.muratov.hello.there.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -14,12 +14,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import ru.nsu.ccfit.muratov.hello.there.service.CustomUserDetailsService;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfiguration {
     @Autowired
-    private UserDetailsServiceImpl userDetailsService;
+    private CustomUserDetailsService userDetailsService;
     @Autowired
     private JwtAuthEntryPoint authEntryPoint;
 
@@ -49,7 +50,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests((authorize) ->
                         authorize
                                 .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement((authorize) ->

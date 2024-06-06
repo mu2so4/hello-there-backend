@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.configuration;
+package ru.nsu.ccfit.muratov.hello.there.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ru.nsu.ccfit.muratov.hello.there.service.CustomUserDetailsService;
+import ru.nsu.ccfit.muratov.hello.there.service.JwtService;
 
 import java.io.IOException;
 
@@ -18,7 +20,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     private JwtService jwtService;
     @Autowired
-    private UserDetailsServiceImpl userDetailsService;
+    private CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

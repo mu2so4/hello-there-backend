@@ -5,11 +5,28 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
+import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
+import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
 
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Logger;
 
 @RestController
@@ -17,6 +34,14 @@ import java.util.logging.Logger;
 @Tag(name = "Group management")
 public class GroupController {
     private static final Logger logger = Logger.getLogger(GroupController.class.getCanonicalName());
+
+    @Autowired
+    private GroupRepository groupRepository;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Value("${data.group.page.size}")
+    private int pageSize;
 
     @Operation(
             summary = "Fetch group list",
@@ -35,8 +60,10 @@ public class GroupController {
 
     })
     @GetMapping
-    public void getAllGroups() {
-        //todo something
+    public List<GroupDto> getAllGroups(@RequestParam(defaultValue = "1") int page) {
+        int internalPageNumber = page - 1;
+        Pageable pageable = PageRequest.of(internalPageNumber, pageSize, Sort.by("id"));
+        return groupRepository.findAll(pageable).stream().map(GroupDto::new).toList();
     }
 
 
@@ -56,12 +83,24 @@ public class GroupController {
             @ApiResponse(
                     description = "Group not found",
                     responseCode = "404"
+            ),
+            @ApiResponse(
+                    description = "Group was deleted",
+                    responseCode = "410"
             )
     })
     @GetMapping("/{groupId}")
-    public void getGroupById(@PathVariable String groupId, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        logger.info(() -> String.format("request from user: %s", user));
+    public GroupDto getGroupById(@PathVariable int groupId) {
+        try {
+            Group group = groupRepository.getReferenceById(groupId);
+            if(group.isDeleted()) {
+                throw new ResponseStatusException(HttpStatus.GONE, "Group was deleted");
+            }
+            return new GroupDto(group);
+        }
+        catch(EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "group not found");
+        }
     }
 
 
@@ -84,8 +123,16 @@ public class GroupController {
             )
     })
     @PostMapping
-    public Group createGroup(@RequestBody Group params) {
-        return params;
+    @ResponseStatus(code = HttpStatus.CREATED)
+    public GroupDto createGroup(@RequestBody GroupCreateRequestDto params, @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity owner = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        Group group = new Group();
+        group.setOwner(owner);
+        group.setCreateTime(new Date());
+        group.setName(params.getName());
+        group.setDescription(params.getDescription());
+        Group savedGroup = groupRepository.save(group);
+        return new GroupDto(savedGroup);
     }
 
 
@@ -116,8 +163,38 @@ public class GroupController {
             )
     })
     @PatchMapping("/{groupId}")
-    public Group updateGroup(@PathVariable("groupId") String groupId, @RequestBody Group newParams) {
-        return newParams;
+    public GroupDto updateGroup(@PathVariable int groupId, @RequestBody GroupUpdateRequestDto newParams, @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity auth = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        Group group = groupRepository.getReferenceById(groupId);
+        UserEntity owner;
+        try {
+            owner = group.getOwner();
+            if(group.isDeleted()) {
+                throw new ResponseStatusException(HttpStatus.GONE, "Group was deleted");
+            }
+        }
+        catch(EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+        }
+
+        if(owner.getId() != auth.getId()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an owner of the group");
+        }
+        boolean isEmpty = true;
+        String newName = newParams.getName();
+        String newDescription = newParams.getDescription();
+        if(newName != null) {
+            isEmpty = false;
+            group.setName(newName);
+        }
+        if(newDescription != null) {
+            isEmpty = false;
+            group.setDescription(newDescription);
+        }
+        if(isEmpty) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty update request received");
+        }
+        return new GroupDto(groupRepository.save(group));
     }
 
     @Operation(
@@ -130,6 +207,10 @@ public class GroupController {
                     responseCode = "204"
             ),
             @ApiResponse(
+                    description = "Bad group ID",
+                    responseCode = "400"
+            ),
+            @ApiResponse(
                     description = "Unauthorized",
                     responseCode = "401"
             ),
@@ -138,12 +219,34 @@ public class GroupController {
                     responseCode = "403"
             ),
             @ApiResponse(
-                    description = "Group not found or already deleted",
+                    description = "Group not found",
                     responseCode = "404"
+            ),
+            @ApiResponse(
+                    description = "Group already deleted",
+                    responseCode = "410"
             )
     })
     @DeleteMapping("/{groupId}")
-    public void updateGroup(@PathVariable("groupId") String groupId) {
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void updateGroup(@PathVariable("groupId") int groupId, @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity auth = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        Group group = groupRepository.getReferenceById(groupId);
+        UserEntity owner;
+        try {
+            owner = group.getOwner();
+            if(group.isDeleted()) {
+                throw new ResponseStatusException(HttpStatus.GONE, "Group already deleted");
+            }
+        }
+        catch(EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+        }
 
+        if(owner.getId() != auth.getId()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an owner of the group");
+        }
+        group.setDeleted(true);
+        groupRepository.save(group);
     }
 }

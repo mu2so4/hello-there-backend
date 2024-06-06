@@ -15,7 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import ru.nsu.ccfit.muratov.hello.there.configuration.JwtService;
+import ru.nsu.ccfit.muratov.hello.there.service.JwtService;
 import ru.nsu.ccfit.muratov.hello.there.dto.AuthResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.LoginDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.RegistrationRequestDto;
