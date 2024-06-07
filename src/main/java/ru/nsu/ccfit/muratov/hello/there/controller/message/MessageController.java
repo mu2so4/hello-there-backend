@@ -51,7 +51,17 @@ public class MessageController {
     }
 
     @DeleteMapping("/{messageId}")
-    public void deleteMapping() {
-
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void deleteMapping(@PathVariable int messageId,
+                              @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
+        if(!messageRepository.existsById(messageId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found");
+        }
+        Message message = messageRepository.getReferenceById(messageId);
+        if(!requester.equals(message.getSender())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot delete other's message");
+        }
+        messageRepository.delete(message);
     }
 }
