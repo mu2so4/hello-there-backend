@@ -14,7 +14,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
@@ -23,7 +22,7 @@ import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
+import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Date;
 import java.util.List;
@@ -38,7 +37,7 @@ public class GroupController {
     @Autowired
     private GroupRepository groupRepository;
     @Autowired
-    private UserRepository userRepository;
+    private UserEntityService userEntityService;
 
     @Value("${data.group.page.size}")
     private int pageSize;
@@ -130,7 +129,7 @@ public class GroupController {
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
     public GroupDto createGroup(@RequestBody GroupCreateRequestDto params, @AuthenticationPrincipal UserDetails userDetails) {
-        UserEntity owner = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        UserEntity owner = userEntityService.getUserByUserDetails(userDetails);
         Group group = new Group();
         group.setOwner(owner);
         group.setCreateTime(new Date());
@@ -173,7 +172,7 @@ public class GroupController {
     })
     @PatchMapping("/{groupId}")
     public GroupDto updateGroup(@PathVariable int groupId, @RequestBody GroupUpdateRequestDto newParams, @AuthenticationPrincipal UserDetails userDetails) {
-        UserEntity auth = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        UserEntity auth = userEntityService.getUserByUserDetails(userDetails);
         Group group = groupRepository.getReferenceById(groupId);
         UserEntity owner;
         try {
@@ -244,7 +243,7 @@ public class GroupController {
     @DeleteMapping("/{groupId}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void updateGroup(@PathVariable("groupId") int groupId, @AuthenticationPrincipal UserDetails userDetails) {
-        UserEntity auth = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        UserEntity auth = userEntityService.getUserByUserDetails(userDetails);
         Group group = groupRepository.getReferenceById(groupId);
         UserEntity owner;
         try {
