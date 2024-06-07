@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.PrivateMessageRequestDto;
@@ -23,11 +22,12 @@ import ru.nsu.ccfit.muratov.hello.there.repository.UserBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.message.MessageRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.message.PrivateMessageRepository;
+import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Date;
 
 @RestController
-@RequestMapping("/api/users/{userId}/messages")
+@RequestMapping("/api/messages/user")
 @Tag(name = "Private messages")
 public class PrivateMessageController {
     @Autowired
@@ -38,6 +38,8 @@ public class PrivateMessageController {
     private PrivateMessageRepository privateMessageRepository;
     @Autowired
     private UserBlacklistRepository userBlacklistRepository;
+    @Autowired
+    private UserEntityService userEntityService;
 
     @Value("${data.message.page.size}")
     private int pageSize;
@@ -84,14 +86,13 @@ public class PrivateMessageController {
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
     public PrivateMessageResponseDto sendMessage(@RequestBody PrivateMessageRequestDto dto,
-                                                 @PathVariable(name = "userId") int receiverId,
                                                  @AuthenticationPrincipal UserDetails userDetails) {
-        UserEntity sender = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+        UserEntity sender = userEntityService.getUserByUserDetails(userDetails);
+        int receiverId = dto.getReceiverId();
 
         if(!userRepository.existsById(receiverId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver not found");
         }
-        UserEntity receiver = userRepository.getReferenceById(receiverId);
         int senderId = sender.getId();
         if(userBlacklistRepository.existsById(new UserBlacklistId(senderId, receiverId)) ||
                 userBlacklistRepository.existsById(new UserBlacklistId(receiverId, senderId))) {
@@ -111,20 +112,11 @@ public class PrivateMessageController {
         message.setSender(sender);
         message = messageRepository.save(message);
 
+        UserEntity receiver = userRepository.getReferenceById(receiverId);
         PrivateMessage privateMessage = new PrivateMessage();
         privateMessage.setMessage(message);
         privateMessage.setReceiver(receiver);
         privateMessage = privateMessageRepository.save(privateMessage);
         return new PrivateMessageResponseDto(privateMessage);
-    }
-
-    @PatchMapping("/{messageId}")
-    public void editMessage() {
-
-    }
-
-    @DeleteMapping("/{messageId}")
-    public void deleteMapping() {
-
     }
 }

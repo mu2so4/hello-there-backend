@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class PrivateMessageRequestDto {
+    private int receiverId;
     private String content;
     private Integer repliedMessageId;
 }
