@@ -83,6 +83,31 @@ public class UserBlacklistController {
         return new UserBlacklistResponseDto(blocker, blocked);
     }
 
+    @Operation(
+            summary = "Remove user from user's blacklist",
+            description = "Removes user from user's blacklist by their ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Success"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User to be unblacklisted not found",
+                    content = @Content
+            )
+    })
     @DeleteMapping("/{userId}")
     public void removeFromBlacklist(@PathVariable int userId, @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity blocker = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
