@@ -45,7 +45,7 @@ public class GroupController {
 
     @Operation(
             summary = "Fetch group list",
-            description = "Get all groups of the social network"
+            description = "Get all groups of the social network."
     )
     @ApiResponses({
             @ApiResponse(
@@ -78,15 +78,18 @@ public class GroupController {
             ),
             @ApiResponse(
                     description = "Unauthorized",
-                    responseCode = "401"
+                    responseCode = "401",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Group not found",
-                    responseCode = "404"
+                    responseCode = "404",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Group was deleted",
-                    responseCode = "410"
+                    responseCode = "410",
+                    content = @Content
             )
     })
     @GetMapping("/{groupId}")
@@ -105,7 +108,7 @@ public class GroupController {
 
 
     @Operation(
-            description = "Creates a new group",
+            description = "Creates a new group.",
             summary = "Create a new group"
     )
     @ApiResponses({
@@ -115,11 +118,13 @@ public class GroupController {
             ),
             @ApiResponse(
                     description = "Invalid group parameters or some of them not set",
-                    responseCode = "400"
+                    responseCode = "400",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Unauthorized",
-                    responseCode = "401"
+                    responseCode = "401",
+                    content = @Content
             )
     })
     @PostMapping
@@ -147,19 +152,23 @@ public class GroupController {
             ),
             @ApiResponse(
                     description = "No valid parameters set",
-                    responseCode = "400"
+                    responseCode = "400",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Unauthorized",
-                    responseCode = "401"
+                    responseCode = "401",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "User has no rights to edit this group",
-                    responseCode = "403"
+                    responseCode = "403",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Group not found",
-                    responseCode = "404"
+                    responseCode = "404",
+                    content = @Content
             )
     })
     @PatchMapping("/{groupId}")
@@ -208,23 +217,28 @@ public class GroupController {
             ),
             @ApiResponse(
                     description = "Bad group ID",
-                    responseCode = "400"
+                    responseCode = "400",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Unauthorized",
-                    responseCode = "401"
+                    responseCode = "401",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "User has no rights to delete this group",
-                    responseCode = "403"
+                    responseCode = "403",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Group not found",
-                    responseCode = "404"
+                    responseCode = "404",
+                    content = @Content
             ),
             @ApiResponse(
                     description = "Group already deleted",
-                    responseCode = "410"
+                    responseCode = "410",
+                    content = @Content
             )
     })
     @DeleteMapping("/{groupId}")

@@ -18,6 +18,6 @@ public class Group {
     private boolean isDeleted;
 
     @ManyToOne
-    @JoinColumn(name = "ownerId")
+    @JoinColumn(name = "owner")
     private UserEntity owner;
 }
