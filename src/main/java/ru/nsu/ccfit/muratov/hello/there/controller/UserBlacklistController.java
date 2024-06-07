@@ -20,7 +20,10 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.user.UserBlacklistRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.user.UserBlacklistResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.repository.UserBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/profile/blacklist", produces = "application/json")
@@ -30,12 +33,37 @@ public class UserBlacklistController {
     private int pageSize;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private UserBlacklistRepository userBlacklistRepository;
 
+    @Operation(
+            summary = "Retrieve user's blacklist",
+            description = "Retrieves user's blacklist. Blacklist is ordered by user IDs."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Success"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content
+            )
+    })
     @GetMapping
-    public void getBlacklist(@RequestParam(defaultValue = "1", name = "page") int pageNumber, @AuthenticationPrincipal UserDetails userDetails) {
+    public List<UserBlacklistResponseDto> getBlacklist(@RequestParam(defaultValue = "1", name = "page") int pageNumber, @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity blocker = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
         int internalPageNumber = pageNumber - 1;
         Pageable pageable = PageRequest.of(internalPageNumber, pageSize, Sort.by("id"));
+        return userBlacklistRepository.findByBlocker(blocker, pageable).stream()
+                .map((blacklistRecord) -> new UserBlacklistResponseDto(blacklistRecord.getBlocker(), blacklistRecord.getBlocked()))
+                .toList();
     }
 
     @Operation(
