@@ -26,4 +26,10 @@ public class UserEntity {
             joinColumns = @JoinColumn(name="user_id", referencedColumnName="id"),
             inverseJoinColumns = @JoinColumn(name="role_id", referencedColumnName="id") )
     private Set<Role> roles;
+
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name="user_blacklist",
+            joinColumns = @JoinColumn(name="blocker", referencedColumnName="id"),
+            inverseJoinColumns = @JoinColumn(name="blocked", referencedColumnName="id") )
+    private Set<UserEntity> blacklist;
 }
