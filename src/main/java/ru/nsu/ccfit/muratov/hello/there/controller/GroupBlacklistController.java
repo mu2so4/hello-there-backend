@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -120,7 +119,7 @@ public class GroupBlacklistController {
                     content = @Content
             )
     })
-    @PostMapping(consumes = "application/json")
+    @PostMapping(consumes = "application/json", produces = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
     public GroupBlacklistDto addToBlacklist(@RequestBody GroupBlacklistRequestDto dto,
                                             @PathVariable int groupId,
@@ -179,15 +178,22 @@ public class GroupBlacklistController {
             )
     })
     @DeleteMapping("/{userId}")
-    public void removeFromBlacklist(@PathVariable int userId, @AuthenticationPrincipal UserDetails userDetails) {
-        UserEntity blocker = userEntityService.getUserByUserDetails(userDetails);
-        try {
-            UserEntity blocked = userRepository.getReferenceById(userId);
-            blocker.getBlacklist().remove(blocked);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFromBlacklist(@PathVariable(name = "userId") int blockedId,
+                                    @PathVariable int groupId,
+                                    @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
+        if(!groupRepository.existsById(groupId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
         }
-        catch (EntityNotFoundException e) {
+        if(!userRepository.existsById(blockedId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
-        userRepository.save(blocker);
+        Group group = groupRepository.getReferenceById(groupId);
+        UserEntity owner = group.getOwner();
+        if(!requester.equals(owner)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot manage group blacklist not being the owner");
+        }
+        groupBlacklistRepository.deleteById(new GroupBlacklistId(groupId, blockedId));
     }
 }
