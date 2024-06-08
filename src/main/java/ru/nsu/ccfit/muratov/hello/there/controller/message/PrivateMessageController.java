@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.entity.Message;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
@@ -42,9 +41,16 @@ public class PrivateMessageController {
     private int pageSize;
 
     @GetMapping("/{userId}")
-    public List<MessageDto> getPrivateMessages(@PathVariable int userId, @RequestParam(defaultValue = "0") int page) {
+    public List<MessageDto> getPrivateMessages(@PathVariable int userId,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity authUser = userEntityService.getUserByUserDetails(userDetails);
+        if(!userRepository.existsById(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+        UserEntity anotherUser = userRepository.getReferenceById(userId);
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("sendTime").descending());
-        return messageRepository.findAll(pageable).stream()
+        return messageRepository.getCorrespondenceByUsers(authUser, anotherUser, pageable).stream()
                 .map(MessageDto::new)
                 .toList();
     }
@@ -83,7 +89,7 @@ public class PrivateMessageController {
     })
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public MessageResponseDto sendMessage(@RequestBody MessageRequestDto dto,
+    public MessageDto sendMessage(@RequestBody MessageRequestDto dto,
                                           @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity sender = userEntityService.getUserByUserDetails(userDetails);
         int receiverId = dto.getReceiverId();
@@ -109,6 +115,6 @@ public class PrivateMessageController {
         message.setSender(sender);
         message.setReceiver(receiver);
         message = messageRepository.save(message);
-        return new MessageResponseDto(message);
+        return new MessageDto(message);
     }
 }

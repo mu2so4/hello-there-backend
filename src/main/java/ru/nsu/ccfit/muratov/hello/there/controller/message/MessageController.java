@@ -8,8 +8,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageUpdateRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageUpdateResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.entity.Message;
 import ru.nsu.ccfit.muratov.hello.there.repository.MessageRepository;
@@ -29,7 +29,7 @@ public class MessageController {
     private long editExpiration;
 
     @PatchMapping("/{messageId}")
-    public MessageUpdateResponseDto editMessage(@RequestBody MessageUpdateRequestDto dto,
+    public MessageDto editMessage(@RequestBody MessageUpdateRequestDto dto,
                                                 @PathVariable int messageId,
                                                 @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
@@ -47,7 +47,7 @@ public class MessageController {
 
         message.setContent(dto.getNewContent());
         message.setLastEditTime(editDate);
-        return new MessageUpdateResponseDto(messageRepository.save(message));
+        return new MessageDto(messageRepository.save(message));
     }
 
     @DeleteMapping("/{messageId}")

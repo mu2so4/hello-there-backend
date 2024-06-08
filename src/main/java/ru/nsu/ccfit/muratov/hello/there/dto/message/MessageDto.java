@@ -49,10 +49,12 @@ public class MessageDto {
     public static class RepliedMessageDto {
         private int messageId;
         private String content;
+        private UserDto sender;
 
         public RepliedMessageDto(Message message) {
             this.messageId = message.getId();
             this.content = message.getContent();
+            this.sender = new UserDto(message.getSender());
         }
     }
 }
