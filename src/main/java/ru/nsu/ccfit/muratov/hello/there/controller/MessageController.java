@@ -150,7 +150,7 @@ public class MessageController {
     @Operation(
             summary = "Edit message content",
             description = "Edits the message content by its ID. " +
-                    "Message can be edited within 24 hours after sending. " +
+                    "Message can be edited within 24 hours before it was sent. " +
                     "In case of success edited message will gain last edit time. " +
                     "A user can edit only their own messages."
     )
@@ -191,6 +191,9 @@ public class MessageController {
         Message message = messageRepository.getReferenceById(messageId);
         if(!requester.equals(message.getSender())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot edit other's message");
+        }
+        if(userEntityService.isSomeoneBlacklistedEachOther(requester, message.getReceiver())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Edit message with blocker or blocked not allowed");
         }
         Date editDate = new Date();
         if(editDate.getTime() - message.getSendTime().getTime() > editExpiration) {
@@ -245,6 +248,13 @@ public class MessageController {
         Message message = messageRepository.getReferenceById(messageId);
         if(!requester.equals(message.getSender())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot delete other's message");
+        }
+        if(userEntityService.isSomeoneBlacklistedEachOther(requester, message.getReceiver())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Delete message with blocker or blocked not allowed");
+        }
+        Date deleteTime = new Date();
+        if(deleteTime.getTime() - message.getSendTime().getTime() > editExpiration) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Delete timeout exceeded");
         }
         messageRepository.delete(message);
     }
