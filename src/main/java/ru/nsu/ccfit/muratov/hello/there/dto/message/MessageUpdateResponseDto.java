@@ -1,7 +1,7 @@
 package ru.nsu.ccfit.muratov.hello.there.dto.message;
 
 import lombok.Data;
-import ru.nsu.ccfit.muratov.hello.there.entity.message.Message;
+import ru.nsu.ccfit.muratov.hello.there.entity.Message;
 
 import java.util.Date;
 

@@ -3,8 +3,7 @@ package ru.nsu.ccfit.muratov.hello.there.dto.message;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.entity.message.Message;
-import ru.nsu.ccfit.muratov.hello.there.entity.message.PrivateMessage;
+import ru.nsu.ccfit.muratov.hello.there.entity.Message;
 
 import java.util.Date;
 
@@ -20,11 +19,10 @@ public class MessageDto {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private RepliedMessageDto repliedMessage;
 
-    public MessageDto(PrivateMessage privateMessage) {
-        this.messageId = privateMessage.getId();
-        Message message = privateMessage.getMessage();
+    public MessageDto(Message message) {
+        this.messageId = message.getId();
         this.sender = new UserDto(message.getSender());
-        this.receiver = new UserDto(privateMessage.getReceiver());
+        this.receiver = new UserDto(message.getReceiver());
         this.content = message.getContent();
         this.sendTime = message.getSendTime();
         this.lastEditTime = message.getLastEditTime();

@@ -1,8 +1,7 @@
-package ru.nsu.ccfit.muratov.hello.there.entity.message;
+package ru.nsu.ccfit.muratov.hello.there.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 
 import java.util.Date;
 
@@ -16,6 +15,9 @@ public class Message {
     @ManyToOne
     @JoinColumn(name = "sender")
     private UserEntity sender;
+    @ManyToOne
+    @JoinColumn(name = "receiver")
+    private UserEntity receiver;
 
     private String content;
     private Date sendTime;

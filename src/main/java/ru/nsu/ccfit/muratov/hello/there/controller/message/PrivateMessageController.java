@@ -16,14 +16,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageDto;
-import ru.nsu.ccfit.muratov.hello.there.dto.message.PrivateMessageRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.dto.message.PrivateMessageResponseDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.entity.message.Message;
-import ru.nsu.ccfit.muratov.hello.there.entity.message.PrivateMessage;
+import ru.nsu.ccfit.muratov.hello.there.entity.Message;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.message.MessageRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.message.PrivateMessageRepository;
+import ru.nsu.ccfit.muratov.hello.there.repository.MessageRepository;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Date;
@@ -38,8 +36,6 @@ public class PrivateMessageController {
     @Autowired
     private MessageRepository messageRepository;
     @Autowired
-    private PrivateMessageRepository privateMessageRepository;
-    @Autowired
     private UserEntityService userEntityService;
 
     @Value("${data.message.page.size}")
@@ -47,8 +43,8 @@ public class PrivateMessageController {
 
     @GetMapping("/{userId}")
     public List<MessageDto> getPrivateMessages(@PathVariable int userId, @RequestParam(defaultValue = "0") int page) {
-        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("message.sendTime").descending());
-        return privateMessageRepository.findAll(pageable).stream()
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("sendTime").descending());
+        return messageRepository.findAll(pageable).stream()
                 .map(MessageDto::new)
                 .toList();
     }
@@ -87,8 +83,8 @@ public class PrivateMessageController {
     })
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public PrivateMessageResponseDto sendMessage(@RequestBody PrivateMessageRequestDto dto,
-                                                 @AuthenticationPrincipal UserDetails userDetails) {
+    public MessageResponseDto sendMessage(@RequestBody MessageRequestDto dto,
+                                          @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity sender = userEntityService.getUserByUserDetails(userDetails);
         int receiverId = dto.getReceiverId();
 
@@ -111,12 +107,8 @@ public class PrivateMessageController {
         message.setContent(dto.getContent());
         message.setSendTime(new Date());
         message.setSender(sender);
+        message.setReceiver(receiver);
         message = messageRepository.save(message);
-
-        PrivateMessage privateMessage = new PrivateMessage();
-        privateMessage.setMessage(message);
-        privateMessage.setReceiver(receiver);
-        privateMessage = privateMessageRepository.save(privateMessage);
-        return new PrivateMessageResponseDto(privateMessage);
+        return new MessageResponseDto(message);
     }
 }

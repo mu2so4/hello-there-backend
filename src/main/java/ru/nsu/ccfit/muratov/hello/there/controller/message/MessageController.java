@@ -11,8 +11,8 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageUpdateResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.entity.message.Message;
-import ru.nsu.ccfit.muratov.hello.there.repository.message.MessageRepository;
+import ru.nsu.ccfit.muratov.hello.there.entity.Message;
+import ru.nsu.ccfit.muratov.hello.there.repository.MessageRepository;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Date;
