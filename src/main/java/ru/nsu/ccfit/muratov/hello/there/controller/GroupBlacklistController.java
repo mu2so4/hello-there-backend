@@ -96,7 +96,8 @@ public class GroupBlacklistController {
 
     @Operation(
             summary = "Add user to user's blacklist",
-            description = "Adds user to user's blacklist by their ID."
+            description = "Adds user to user's blacklist by their ID. " +
+                    "Only the group's owner can perform this action."
     )
     @ApiResponses({
             @ApiResponse(
@@ -114,8 +115,13 @@ public class GroupBlacklistController {
                     content = @Content
             ),
             @ApiResponse(
+                    responseCode = "403",
+                    description = "Cannot access group's blacklist",
+                    content = @Content
+            ),
+            @ApiResponse(
                     responseCode = "404",
-                    description = "User to be blacklisted not found",
+                    description = "User or group not found",
                     content = @Content
             )
     })
@@ -153,8 +159,9 @@ public class GroupBlacklistController {
     }
 
     @Operation(
-            summary = "Remove user from user's blacklist",
-            description = "Removes user from user's blacklist by their ID."
+            summary = "Remove user from group's blacklist",
+            description = "Removes user from group's blacklist by their ID. " +
+                    "Only the group's owner can perform this action."
     )
     @ApiResponses({
             @ApiResponse(
@@ -172,8 +179,13 @@ public class GroupBlacklistController {
                     content = @Content
             ),
             @ApiResponse(
+                    responseCode = "403",
+                    description = "Cannot access group's blacklist",
+                    content = @Content
+            ),
+            @ApiResponse(
                     responseCode = "404",
-                    description = "User to be unblacklisted not found",
+                    description = "User or group not found",
                     content = @Content
             )
     })
