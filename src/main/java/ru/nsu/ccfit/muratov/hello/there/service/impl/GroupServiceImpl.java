@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.muratov.hello.there.entity.*;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.SubscriptionId;
@@ -12,6 +13,7 @@ import ru.nsu.ccfit.muratov.hello.there.repository.SubscriptionRepository;
 import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class GroupServiceImpl implements GroupService {
@@ -20,7 +22,7 @@ public class GroupServiceImpl implements GroupService {
     @Autowired
     private GroupBlacklistRepository groupBlacklistRepository;
     @Autowired
-    SubscriptionRepository subscriptionRepository;
+    private SubscriptionRepository subscriptionRepository;
 
     @Override
     public Group getById(Integer id) throws GroupNotFoundException {
@@ -47,5 +49,14 @@ public class GroupServiceImpl implements GroupService {
         subscription.setSubscriptionTime(new Date());
         subscription.setId(subscriptionId);
         return subscriptionRepository.save(subscription);
+    }
+
+    @Override
+    public List<Subscription> getSubscriberList(Group group, UserEntity requester, Pageable pageable)
+            throws GroupBlacklistedException {
+        if(isBlacklisted(group, requester)) {
+            throw new GroupBlacklistedException("Cannot subscribe to group blocked the user");
+        }
+        return subscriptionRepository.findByGroup(group, pageable);
     }
 }
