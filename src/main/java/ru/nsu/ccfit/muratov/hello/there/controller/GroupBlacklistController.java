@@ -24,7 +24,6 @@ import ru.nsu.ccfit.muratov.hello.there.entity.GroupBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.UserBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
@@ -47,7 +46,7 @@ public class GroupBlacklistController {
     @Value("${data.user.blacklist.page.size}")
     private int pageSize;
 
-    /*@Operation(
+    @Operation(
             summary = "Retrieve group's blacklist",
             description = "Retrieves group's blacklist. Blacklist is ordered by user IDs. " +
                     "Only the owner can access the blacklist."
@@ -94,7 +93,7 @@ public class GroupBlacklistController {
         return groupBlacklistRepository.findByGroup(group, pageable).stream()
                 .map(GroupBlacklistDto::new)
                 .toList();
-    }*/
+    }
 
     @Operation(
             summary = "Add user to user's blacklist",
