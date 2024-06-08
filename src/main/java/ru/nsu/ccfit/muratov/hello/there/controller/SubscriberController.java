@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.SubscriptionDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupBlacklistedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
@@ -68,6 +69,23 @@ public class SubscriberController {
         }
         catch(GroupBlacklistedException e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
+        }
+    }
+
+    @DeleteMapping
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void unsubscribe(@PathVariable int groupId,
+                            @AuthenticationPrincipal UserDetails userDetails) {
+        UserEntity user = userEntityService.getUserByUserDetails(userDetails);
+        try {
+            Group group = groupService.getById(groupId);
+            groupService.unsubscribe(group, user);
+        }
+        catch(GroupNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+        catch(BadRequestException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.muratov.hello.there.entity.*;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.SubscriptionId;
+import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupBlacklistedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupBlacklistRepository;
@@ -32,7 +33,6 @@ public class GroupServiceImpl implements GroupService {
         return groupRepository.getReferenceById(id);
     }
 
-    @Override
     public boolean isBlacklisted(Group group, UserEntity user) {
         return groupBlacklistRepository.existsById(new GroupBlacklistId(group.getId(), user.getId()));
     }
@@ -49,6 +49,14 @@ public class GroupServiceImpl implements GroupService {
         subscription.setSubscriptionTime(new Date());
         subscription.setId(subscriptionId);
         return subscriptionRepository.save(subscription);
+    }
+
+    @Override
+    public void unsubscribe(Group group, UserEntity user) throws BadRequestException {
+        if(user.equals(group.getOwner())) {
+            throw new BadRequestException("Group owner cannot unsubscribe from their group");
+        }
+        subscriptionRepository.deleteById(new SubscriptionId(group.getId(), user.getId()));
     }
 
     @Override
