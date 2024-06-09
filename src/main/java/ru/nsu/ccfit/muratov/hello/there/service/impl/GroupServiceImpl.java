@@ -34,7 +34,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public Group getById(Integer id) throws GroupNotFoundException {
         if(!groupRepository.existsById(id)) {
-            throw new GroupNotFoundException("group not found");
+            throw new GroupNotFoundException("Group not found");
         }
         return groupRepository.getReferenceById(id);
     }
@@ -161,11 +161,13 @@ public class GroupServiceImpl implements GroupService {
         return groupBlacklistRepository.findByGroup(group, pageable);
     }
 
-    private boolean isBlacklisted(Group group, UserEntity user) {
+    @Override
+    public boolean isBlacklisted(Group group, UserEntity user) {
         return groupBlacklistRepository.existsById(new GroupBlacklistId(group.getId(), user.getId()));
     }
 
-    private boolean checkOwner(Group group, UserEntity requester) {
+    @Override
+    public boolean checkOwner(Group group, UserEntity requester) {
         return requester.equals(group.getOwner());
     }
 }

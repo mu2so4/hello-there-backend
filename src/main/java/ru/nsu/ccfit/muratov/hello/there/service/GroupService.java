@@ -29,4 +29,7 @@ public interface GroupService {
     GroupBlacklist addToBlacklist(Group group, UserEntity blocked, String reason, UserEntity requester) throws GroupAdminAccessDeniedException, BadRequestException;
     void removeFromBlacklist(Group group, UserEntity blocked, UserEntity requester) throws GroupAdminAccessDeniedException;
     Page<GroupBlacklist> getBlacklist(Group group, UserEntity requester, Pageable pageable) throws GroupAdminAccessDeniedException;
+    boolean isBlacklisted(Group group, UserEntity user);
+
+    boolean checkOwner(Group group, UserEntity requester);
 }
