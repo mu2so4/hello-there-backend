@@ -17,12 +17,15 @@ import org.springframework.web.bind.annotation.*;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.post.PostDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.exception.AccessDeniedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupAdminAccessDeniedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
+import ru.nsu.ccfit.muratov.hello.there.service.PostService;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.List;
@@ -38,6 +41,8 @@ public class GroupController {
     private UserEntityService userEntityService;
     @Autowired
     private GroupService groupService;
+    @Autowired
+    private PostService postService;
 
     @Value("${data.group.page.size}")
     private int pageSize;
@@ -206,5 +211,48 @@ public class GroupController {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
         Group group = groupService.getById(groupId);
         groupService.delete(group, requester);
+    }
+
+    @Operation(
+            summary = "Retrieve group posts",
+            description = "Retrieves group posts. Posts are ordered by create time descending. " +
+                    "Blocked users cannot view group posts."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    description = "Success",
+                    responseCode = "200"
+            ),
+            @ApiResponse(
+                    description = "Bad group ID",
+                    responseCode = "400",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Unauthorized",
+                    responseCode = "401",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "User blocked by group",
+                    responseCode = "403",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Group not found",
+                    responseCode = "404",
+                    content = @Content
+            )
+    })
+    @GetMapping(value = "/{groupId}/posts", produces = "application/json")
+    public List<PostDto> getPosts(@PathVariable("groupId") int groupId,
+                                  @RequestParam(name = "page", defaultValue = "0") int pageNumber,
+                                  @AuthenticationPrincipal UserDetails userDetails) throws GroupNotFoundException, AccessDeniedException {
+        UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
+        Group group = groupService.getById(groupId);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createTime").descending());
+        return postService.getGroupPosts(group, pageable, requester).stream()
+                .map(PostDto::new)
+                .toList();
     }
 }
