@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.entity;
+package ru.nsu.ccfit.muratov.hello.there.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
