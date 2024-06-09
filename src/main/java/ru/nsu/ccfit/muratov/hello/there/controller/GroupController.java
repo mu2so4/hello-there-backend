@@ -59,9 +59,8 @@ public class GroupController {
 
     })
     @GetMapping
-    public List<GroupDto> getAllGroups(@RequestParam(defaultValue = "1") int page) {
-        int internalPageNumber = page - 1;
-        Pageable pageable = PageRequest.of(internalPageNumber, pageSize, Sort.by("id"));
+    public List<GroupDto> getAllGroups(@RequestParam(name = "page", defaultValue = "0") int pageNumber) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id"));
         return groupService.getGroupList(pageable).stream()
                 .map(GroupDto::new)
                 .toList();
