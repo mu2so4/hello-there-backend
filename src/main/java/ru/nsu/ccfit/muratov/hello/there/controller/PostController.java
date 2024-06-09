@@ -151,4 +151,43 @@ public class PostController {
         Post post = postService.findById(postId);
         return new PostDto(postService.update(post, dto.getNewContent(), requester));
     }
+
+    @Operation(
+            summary = "Delete group post",
+            description = "Deletes group post. Only the group owner can delete group posts."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    description = "Success",
+                    responseCode = "204"
+            ),
+            @ApiResponse(
+                    description = "Bad group ID",
+                    responseCode = "400",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Unauthorized",
+                    responseCode = "401",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Access denied",
+                    responseCode = "403",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Post not found or already deleted",
+                    responseCode = "404",
+                    content = @Content
+            )
+    })
+    @DeleteMapping("/{postId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePost(@PathVariable int postId,
+                           @AuthenticationPrincipal UserDetails userDetails) throws ResourceNotFoundException, AccessDeniedException {
+        UserEntity requester = userService.getUserByUserDetails(userDetails);
+        Post post = postService.findById(postId);
+        postService.delete(post, requester);
+    }
 }
