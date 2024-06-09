@@ -14,19 +14,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.group.GroupBlacklistDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.group.GroupBlacklistRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
-import ru.nsu.ccfit.muratov.hello.there.entity.GroupBlacklist;
-import ru.nsu.ccfit.muratov.hello.there.entity.GroupBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.repository.GroupBlacklistRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
+import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
+import ru.nsu.ccfit.muratov.hello.there.exception.GroupAdminAccessDeniedException;
+import ru.nsu.ccfit.muratov.hello.there.exception.ResourceNotFoundException;
+import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -34,13 +31,9 @@ import java.util.List;
 @Tag(name = "Group blacklist")
 public class GroupBlacklistController {
     @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private GroupBlacklistRepository groupBlacklistRepository;
+    private GroupService groupService;
     @Autowired
     private UserEntityService userEntityService;
-    @Autowired
-    private GroupRepository groupRepository;
 
     @Value("${data.user.blacklist.page.size}")
     private int pageSize;
@@ -79,17 +72,11 @@ public class GroupBlacklistController {
     @GetMapping(produces = "application/json")
     public List<GroupBlacklistDto> getBlacklist(@PathVariable int groupId,
                                                        @RequestParam(defaultValue = "0", name = "page") int pageNumber,
-                                                       @AuthenticationPrincipal UserDetails userDetails) {
+                                                       @AuthenticationPrincipal UserDetails userDetails) throws ResourceNotFoundException, GroupAdminAccessDeniedException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        if(!groupRepository.existsById(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
-        }
-        Group group = groupRepository.getReferenceById(groupId);
-        if(!requester.equals(group.getOwner())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot access not being the owner");
-        }
+        Group group = groupService.getById(groupId);
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id"));
-        return groupBlacklistRepository.findByGroup(group, pageable).stream()
+        return groupService.getBlacklist(group, requester, pageable).stream()
                 .map(GroupBlacklistDto::new)
                 .toList();
     }
@@ -129,33 +116,12 @@ public class GroupBlacklistController {
     @ResponseStatus(code = HttpStatus.CREATED)
     public GroupBlacklistDto addToBlacklist(@RequestBody GroupBlacklistRequestDto dto,
                                             @PathVariable int groupId,
-                                            @AuthenticationPrincipal UserDetails userDetails) {
+                                            @AuthenticationPrincipal UserDetails userDetails)
+            throws ResourceNotFoundException, BadRequestException, GroupAdminAccessDeniedException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        if(!groupRepository.existsById(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
-        }
-        int blockedId = dto.getUserId();
-        if(!userRepository.existsById(blockedId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        Group group = groupRepository.getReferenceById(groupId);
-        UserEntity owner = group.getOwner();
-        if(!requester.equals(owner)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot manage group blacklist not being the owner");
-        }
-        UserEntity blocked = userRepository.getReferenceById(blockedId);
-        if(blocked.equals(owner)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Attempt to add themselves to blacklist");
-        }
-        GroupBlacklistId groupBlacklistId = new GroupBlacklistId(group.getId(), blockedId);
-        GroupBlacklist groupBlacklist = new GroupBlacklist();
-        groupBlacklist.setId(groupBlacklistId);
-        groupBlacklist.setGroup(group);
-        groupBlacklist.setBlockedUser(blocked);
-        groupBlacklist.setBlockTime(new Date());
-        groupBlacklist.setReason(dto.getReason());
-
-        return new GroupBlacklistDto(groupBlacklistRepository.save(groupBlacklist));
+        Group group = groupService.getById(groupId);
+        UserEntity blocked = userEntityService.getById(dto.getUserId());
+        return new GroupBlacklistDto(groupService.addToBlacklist(group, blocked, dto.getReason(), requester));
     }
 
     @Operation(
@@ -193,19 +159,11 @@ public class GroupBlacklistController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFromBlacklist(@PathVariable(name = "userId") int blockedId,
                                     @PathVariable int groupId,
-                                    @AuthenticationPrincipal UserDetails userDetails) {
+                                    @AuthenticationPrincipal UserDetails userDetails)
+            throws GroupAdminAccessDeniedException, ResourceNotFoundException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        if(!groupRepository.existsById(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
-        }
-        if(!userRepository.existsById(blockedId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        Group group = groupRepository.getReferenceById(groupId);
-        UserEntity owner = group.getOwner();
-        if(!requester.equals(owner)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot manage group blacklist not being the owner");
-        }
-        groupBlacklistRepository.deleteById(new GroupBlacklistId(groupId, blockedId));
+        Group group = groupService.getById(groupId);
+        UserEntity blocked = userEntityService.getById(blockedId);
+        groupService.removeFromBlacklist(group, blocked, requester);
     }
 }

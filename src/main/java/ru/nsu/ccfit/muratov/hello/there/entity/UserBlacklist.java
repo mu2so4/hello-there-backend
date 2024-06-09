@@ -3,6 +3,7 @@ package ru.nsu.ccfit.muratov.hello.there.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import ru.nsu.ccfit.muratov.hello.there.entity.id.UserBlacklistId;
 
 @Data
 @Entity(name = "user_blacklist")

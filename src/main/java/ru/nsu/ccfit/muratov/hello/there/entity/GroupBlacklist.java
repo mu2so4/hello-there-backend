@@ -2,6 +2,7 @@ package ru.nsu.ccfit.muratov.hello.there.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
 
 import java.util.Date;
 

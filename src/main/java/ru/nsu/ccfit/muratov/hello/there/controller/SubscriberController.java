@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.SubscriptionDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
@@ -72,26 +71,19 @@ public class SubscriberController {
     @GetMapping(produces = "application/json")
     public List<SubscriptionDto> getSubscribers(@PathVariable int groupId,
                                                 @RequestParam(name = "page", defaultValue = "0") int pageNumber,
-                                                @AuthenticationPrincipal UserDetails userDetails) {
+                                                @AuthenticationPrincipal UserDetails userDetails)
+            throws GroupNotFoundException, GroupBlacklistedException {
         UserEntity user = userEntityService.getUserByUserDetails(userDetails);
-        try {
-            Group group = groupService.getById(groupId);
-            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("subscriptionTime"));
-            return groupService.getSubscriberList(group, user, pageable).stream()
-                    .map(SubscriptionDto::new)
-                    .toList();
-        }
-        catch(GroupNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-        catch(GroupBlacklistedException e) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
-        }
+        Group group = groupService.getById(groupId);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("subscriptionTime"));
+        return groupService.getSubscriberList(group, user, pageable).stream()
+                .map(SubscriptionDto::new)
+                .toList();
     }
 
 
     @Operation(
-            summary = "Subscribe on a group.",
+            summary = "Subscribe on a group",
             description = "Subscribes on a group. " +
                     "A user cannot subscribe if they are blocked by the group."
     )
@@ -124,22 +116,15 @@ public class SubscriberController {
     @PostMapping(produces = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
     public SubscriptionDto subscribe(@PathVariable int groupId,
-                                     @AuthenticationPrincipal UserDetails userDetails) {
+                                     @AuthenticationPrincipal UserDetails userDetails)
+            throws GroupBlacklistedException, GroupNotFoundException {
         UserEntity user = userEntityService.getUserByUserDetails(userDetails);
-        try {
-            Group group = groupService.getById(groupId);
-            return new SubscriptionDto(groupService.subscribe(group, user));
-        }
-        catch(GroupNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-        catch(GroupBlacklistedException e) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
-        }
+        Group group = groupService.getById(groupId);
+        return new SubscriptionDto(groupService.subscribe(group, user));
     }
 
     @Operation(
-            summary = "Unsubscribe from a group.",
+            summary = "Unsubscribe from a group",
             description = "Unsubscribes from a group. " +
                     "A user cannot subscribe if they are the group's owner."
     )
@@ -167,17 +152,10 @@ public class SubscriberController {
     @DeleteMapping
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void unsubscribe(@PathVariable int groupId,
-                            @AuthenticationPrincipal UserDetails userDetails) {
+                            @AuthenticationPrincipal UserDetails userDetails)
+            throws GroupNotFoundException, BadRequestException {
         UserEntity user = userEntityService.getUserByUserDetails(userDetails);
-        try {
-            Group group = groupService.getById(groupId);
-            groupService.unsubscribe(group, user);
-        }
-        catch(GroupNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-        catch(BadRequestException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        Group group = groupService.getById(groupId);
+        groupService.unsubscribe(group, user);
     }
 }

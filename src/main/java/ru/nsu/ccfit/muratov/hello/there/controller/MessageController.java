@@ -14,17 +14,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.entity.Message;
-import ru.nsu.ccfit.muratov.hello.there.repository.MessageRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
+import ru.nsu.ccfit.muratov.hello.there.exception.*;
+import ru.nsu.ccfit.muratov.hello.there.service.MessageService;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -34,12 +32,8 @@ public class MessageController {
     @Autowired
     private UserEntityService userEntityService;
     @Autowired
-    private MessageRepository messageRepository;
-    @Autowired
-    private UserRepository userRepository;
+    private MessageService messageService;
 
-    @Value("${data.message.edit.expiration}")
-    private long editExpiration;
     @Value("${data.message.page.size}")
     private int pageSize;
 
@@ -71,14 +65,11 @@ public class MessageController {
     @GetMapping(value = "/{userId}", produces = "application/json")
     public List<MessageDto> getPrivateMessages(@PathVariable int userId,
                                                @RequestParam(defaultValue = "0") int page,
-                                               @AuthenticationPrincipal UserDetails userDetails) {
+                                               @AuthenticationPrincipal UserDetails userDetails) throws UserNotFoundException {
         UserEntity authUser = userEntityService.getUserByUserDetails(userDetails);
-        if(!userRepository.existsById(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        UserEntity anotherUser = userRepository.getReferenceById(userId);
+        UserEntity anotherUser = userEntityService.getById(userId);
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("sendTime").descending());
-        return messageRepository.getCorrespondenceByUsers(authUser, anotherUser, pageable).stream()
+        return messageService.getCorrespondence(authUser, anotherUser, pageable).stream()
                 .map(MessageDto::new)
                 .toList();
     }
@@ -118,32 +109,10 @@ public class MessageController {
     @PostMapping(produces = "application/json", consumes = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
     public MessageDto sendMessage(@RequestBody MessageRequestDto dto,
-                                  @AuthenticationPrincipal UserDetails userDetails) {
+                                  @AuthenticationPrincipal UserDetails userDetails) throws ResourceNotFoundException, UserBlacklistException {
         UserEntity sender = userEntityService.getUserByUserDetails(userDetails);
-        int receiverId = dto.getReceiverId();
-
-        if(!userRepository.existsById(receiverId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Receiver not found");
-        }
-        UserEntity receiver = userRepository.getReferenceById(receiverId);
-        if(userEntityService.isSomeoneBlacklistedEachOther(sender, receiver)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot send message to blocker or blocked");
-        }
-
-        Message message = new Message();
-        Integer id = dto.getRepliedMessageId();
-        if(id != null) {
-            if(!messageRepository.existsById(id)) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Replied message not found");
-            }
-            message.setRepliedMessage(messageRepository.getReferenceById(id));
-        }
-        message.setContent(dto.getContent());
-        message.setSendTime(new Date());
-        message.setSender(sender);
-        message.setReceiver(receiver);
-        message = messageRepository.save(message);
-        return new MessageDto(message);
+        UserEntity receiver = userEntityService.getById(dto.getReceiverId());
+        return new MessageDto(messageService.sendMessage(sender, receiver, dto.getContent(), dto.getRepliedMessageId()));
     }
 
 
@@ -183,26 +152,11 @@ public class MessageController {
     @PatchMapping(value = "/{messageId}", produces = "application/json", consumes = "application/json")
     public MessageDto editMessage(@RequestBody MessageUpdateRequestDto dto,
                                                 @PathVariable int messageId,
-                                                @AuthenticationPrincipal UserDetails userDetails) {
+                                                @AuthenticationPrincipal UserDetails userDetails)
+            throws MessageNotFoundException, AccessDeniedException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        if(!messageRepository.existsById(messageId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found");
-        }
-        Message message = messageRepository.getReferenceById(messageId);
-        if(!requester.equals(message.getSender())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot edit other's message");
-        }
-        if(userEntityService.isSomeoneBlacklistedEachOther(requester, message.getReceiver())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Edit message with blocker or blocked not allowed");
-        }
-        Date editDate = new Date();
-        if(editDate.getTime() - message.getSendTime().getTime() > editExpiration) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Edit timeout exceeded");
-        }
-
-        message.setContent(dto.getNewContent());
-        message.setLastEditTime(editDate);
-        return new MessageDto(messageRepository.save(message));
+        Message message = messageService.getById(messageId);
+        return new MessageDto(messageService.edit(message, requester, dto.getNewContent()));
     }
 
     @Operation(
@@ -240,22 +194,9 @@ public class MessageController {
     @DeleteMapping(value = "/{messageId}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void deleteMapping(@PathVariable int messageId,
-                              @AuthenticationPrincipal UserDetails userDetails) {
+                              @AuthenticationPrincipal UserDetails userDetails) throws MessageNotFoundException, AccessDeniedException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        if(!messageRepository.existsById(messageId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found");
-        }
-        Message message = messageRepository.getReferenceById(messageId);
-        if(!requester.equals(message.getSender())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot delete other's message");
-        }
-        if(userEntityService.isSomeoneBlacklistedEachOther(requester, message.getReceiver())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Delete message with blocker or blocked not allowed");
-        }
-        Date deleteTime = new Date();
-        if(deleteTime.getTime() - message.getSendTime().getTime() > editExpiration) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Delete timeout exceeded");
-        }
-        messageRepository.delete(message);
+        Message message = messageService.getById(messageId);
+        messageService.delete(message, requester);
     }
 }

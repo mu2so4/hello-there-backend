@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -14,14 +13,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.dto.UserDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.user.UserBlacklistRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.user.UserBlacklistResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.repository.UserBlacklistRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
+import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
+import ru.nsu.ccfit.muratov.hello.there.exception.UserNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.List;
@@ -32,10 +29,6 @@ import java.util.List;
 public class UserBlacklistController {
     @Value("${data.user.blacklist.page.size}")
     private int pageSize;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserBlacklistRepository userBlacklistRepository;
     @Autowired
     private UserEntityService userEntityService;
 
@@ -60,12 +53,11 @@ public class UserBlacklistController {
             )
     })
     @GetMapping
-    public List<UserBlacklistResponseDto> getBlacklist(@RequestParam(defaultValue = "1", name = "page") int pageNumber, @AuthenticationPrincipal UserDetails userDetails) {
+    public List<UserDto> getBlacklist(@RequestParam(defaultValue = "0", name = "page") int pageNumber, @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity blocker = userEntityService.getUserByUserDetails(userDetails);
-        int internalPageNumber = pageNumber - 1;
-        Pageable pageable = PageRequest.of(internalPageNumber, pageSize, Sort.by("id"));
-        return userBlacklistRepository.findByBlocker(blocker, pageable).stream()
-                .map((blacklistRecord) -> new UserBlacklistResponseDto(blacklistRecord.getBlocker(), blacklistRecord.getBlocked()))
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id"));
+        return userEntityService.getBlacklist(blocker, pageable).stream()
+                .map(record -> new UserDto(record.getBlocked()))
                 .toList();
     }
 
@@ -96,22 +88,12 @@ public class UserBlacklistController {
     })
     @PostMapping(consumes = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public UserBlacklistResponseDto addToBlacklist(@RequestBody UserBlacklistRequestDto dto, @AuthenticationPrincipal UserDetails userDetails) {
+    public UserDto addToBlacklist(@RequestBody UserBlacklistRequestDto dto, @AuthenticationPrincipal UserDetails userDetails)
+            throws UserNotFoundException, BadRequestException {
         UserEntity blocker = userEntityService.getUserByUserDetails(userDetails);
-        int blockedId = dto.getId();
-        if(blocker.getId() == blockedId) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Attempt to add themselves to blacklist");
-        }
-        UserEntity blocked;
-        try {
-            blocked = userRepository.getReferenceById(blockedId);
-            blocker.getBlacklist().add(blocked);
-        }
-        catch (EntityNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        userRepository.save(blocker);
-        return new UserBlacklistResponseDto(blocker, blocked);
+        UserEntity blocked = userEntityService.getById(dto.getId());
+        userEntityService.addToBlacklist(blocker, blocked);
+        return new UserDto(blocked);
     }
 
     @Operation(
@@ -120,7 +102,7 @@ public class UserBlacklistController {
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "201",
+                    responseCode = "204",
                     description = "Success"
             ),
             @ApiResponse(
@@ -140,15 +122,10 @@ public class UserBlacklistController {
             )
     })
     @DeleteMapping("/{userId}")
-    public void removeFromBlacklist(@PathVariable int userId, @AuthenticationPrincipal UserDetails userDetails) {
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void removeFromBlacklist(@PathVariable int userId, @AuthenticationPrincipal UserDetails userDetails) throws UserNotFoundException {
         UserEntity blocker = userEntityService.getUserByUserDetails(userDetails);
-        try {
-            UserEntity blocked = userRepository.getReferenceById(userId);
-            blocker.getBlacklist().remove(blocked);
-        }
-        catch (EntityNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        userRepository.save(blocker);
+        UserEntity blocked = userEntityService.getById(userId);
+        userEntityService.removeFromBlacklist(blocker, blocked);
     }
 }
