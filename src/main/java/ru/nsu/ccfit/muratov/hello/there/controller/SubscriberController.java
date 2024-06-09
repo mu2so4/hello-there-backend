@@ -1,5 +1,9 @@
 package ru.nsu.ccfit.muratov.hello.there.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +38,37 @@ public class SubscriberController {
     @Value("${data.groups.subscribers.page.size}")
     private int pageSize;
 
+    @Operation(
+            summary = "Retrieve group's subscriber list",
+            description = "Retrieves group's subscriber list. The list is ordered by user IDs. " +
+                    "A user cannot access the list if they are blocked by the group."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Success"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access denied for blacklisted user",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Group not found",
+                    content = @Content
+            )
+    })
     @GetMapping(produces = "application/json")
     public List<SubscriptionDto> getSubscribers(@PathVariable int groupId,
                                                 @RequestParam(name = "page", defaultValue = "0") int pageNumber,
@@ -55,6 +90,37 @@ public class SubscriberController {
     }
 
 
+    @Operation(
+            summary = "Subscribe on a group.",
+            description = "Subscribes on a group. " +
+                    "A user cannot subscribe if they are blocked by the group."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Success"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access denied for blacklisted user",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Group not found",
+                    content = @Content
+            )
+    })
     @PostMapping(produces = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
     public SubscriptionDto subscribe(@PathVariable int groupId,
@@ -72,6 +138,32 @@ public class SubscriberController {
         }
     }
 
+    @Operation(
+            summary = "Unsubscribe from a group.",
+            description = "Unsubscribes from a group. " +
+                    "A user cannot subscribe if they are the group's owner."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Success"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Group not found",
+                    content = @Content
+            )
+    })
     @DeleteMapping
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
     public void unsubscribe(@PathVariable int groupId,
