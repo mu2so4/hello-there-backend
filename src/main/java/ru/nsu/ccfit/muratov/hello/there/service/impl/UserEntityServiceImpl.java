@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.service;
+package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.RegistrationRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.UserBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.exception.UserNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.repository.RoleRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
+import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Collections;
 import java.util.Date;
@@ -44,6 +46,14 @@ public class UserEntityServiceImpl implements UserEntityService {
     @Override
     public UserEntity getUserByUserDetails(UserDetails userDetails) {
         return userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+    }
+
+    @Override
+    public UserEntity getById(Integer id) throws UserNotFoundException {
+        if(!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User not found");
+        }
+        return userRepository.getReferenceById(id);
     }
 
     @Override

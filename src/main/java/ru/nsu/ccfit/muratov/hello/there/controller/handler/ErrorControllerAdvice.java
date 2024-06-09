@@ -4,7 +4,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import ru.nsu.ccfit.muratov.hello.there.entity.ErrorDto;
 import ru.nsu.ccfit.muratov.hello.there.exception.AccessDeniedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
