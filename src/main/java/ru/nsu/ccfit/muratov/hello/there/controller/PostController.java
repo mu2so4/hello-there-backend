@@ -11,8 +11,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.ccfit.muratov.hello.there.dto.post.PostDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.post.PostEditRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.post.PostRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
+import ru.nsu.ccfit.muratov.hello.there.entity.Post;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.exception.AccessDeniedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
@@ -73,7 +75,7 @@ public class PostController {
 
     @Operation(
             summary = "Publish a new post in the group",
-            description = "Publish a new post in the group. Only the group owner can publish posts."
+            description = "Publishes a new post in the group. Only the group owner can publish posts."
     )
     @ApiResponses({
             @ApiResponse(
@@ -109,5 +111,44 @@ public class PostController {
         UserEntity requester = userService.getUserByUserDetails(userDetails);
         Group group = groupService.getById(dto.getGroupId());
         return new PostDto(postService.create(group, dto.getContent(), requester));
+    }
+
+    @Operation(
+            summary = "Edit group post content",
+            description = "Edits group post content. Only the group owner can edit group posts."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    description = "Success",
+                    responseCode = "200"
+            ),
+            @ApiResponse(
+                    description = "No valid parameters set",
+                    responseCode = "400",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Unauthorized",
+                    responseCode = "401",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Access denied",
+                    responseCode = "403",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    description = "Post not found",
+                    responseCode = "404",
+                    content = @Content
+            )
+    })
+    @PatchMapping(value = "/{postId}", consumes = "application/json", produces = "application/json")
+    public PostDto editPost(@RequestBody PostEditRequestDto dto,
+                            @PathVariable int postId,
+                            @AuthenticationPrincipal UserDetails userDetails) throws ResourceNotFoundException, AccessDeniedException {
+        UserEntity requester = userService.getUserByUserDetails(userDetails);
+        Post post = postService.findById(postId);
+        return new PostDto(postService.update(post, dto.getNewContent(), requester));
     }
 }
