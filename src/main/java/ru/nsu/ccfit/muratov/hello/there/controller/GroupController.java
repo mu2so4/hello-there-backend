@@ -122,7 +122,7 @@ public class GroupController {
     @ResponseStatus(code = HttpStatus.CREATED)
     public GroupDto createGroup(@RequestBody GroupCreateRequestDto params, @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity owner = userEntityService.getUserByUserDetails(userDetails);
-        return new GroupDto(groupService.createGroup(owner, params.getName(), params.getDescription()));
+        return new GroupDto(groupService.create(owner, params.getName(), params.getDescription()));
     }
 
 

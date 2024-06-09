@@ -76,7 +76,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Group createGroup(UserEntity owner, String name, String description) {
+    public Group create(UserEntity owner, String name, String description) {
         Group group = new Group();
         group.setOwner(owner);
         group.setCreateTime(new Date());
@@ -123,6 +123,42 @@ public class GroupServiceImpl implements GroupService {
         }
         group.setDeleted(true);
         groupRepository.save(group);
+    }
+
+    @Override
+    public GroupBlacklist addToBlacklist(Group group, UserEntity blocked, String reason, UserEntity requester)
+            throws GroupAdminAccessDeniedException, BadRequestException {
+        if(!checkOwner(group, requester)) {
+            throw new GroupAdminAccessDeniedException("Cannot access blacklist not being the owner");
+        }
+        if(requester.equals(blocked)) {
+            throw new BadRequestException("Attempt to add themselves to blacklist");
+        }
+        unsubscribe(group, blocked);
+        GroupBlacklistId groupBlacklistId = new GroupBlacklistId(group.getId(), blocked.getId());
+        GroupBlacklist groupBlacklist = new GroupBlacklist();
+        groupBlacklist.setId(groupBlacklistId);
+        groupBlacklist.setGroup(group);
+        groupBlacklist.setBlockedUser(blocked);
+        groupBlacklist.setBlockTime(new Date());
+        groupBlacklist.setReason(reason);
+        return groupBlacklistRepository.save(groupBlacklist);
+    }
+
+    @Override
+    public void removeFromBlacklist(Group group, UserEntity blocked, UserEntity requester) throws GroupAdminAccessDeniedException {
+        if(!checkOwner(group, requester)) {
+            throw new GroupAdminAccessDeniedException("Cannot access blacklist not being the owner");
+        }
+        groupBlacklistRepository.deleteById(new GroupBlacklistId(group.getId(), blocked.getId()));
+    }
+
+    @Override
+    public Page<GroupBlacklist> getBlacklist(Group group, UserEntity requester, Pageable pageable) throws GroupAdminAccessDeniedException {
+        if(!checkOwner(group, requester)) {
+            throw new GroupAdminAccessDeniedException("Cannot access blacklist not being the owner");
+        }
+        return groupBlacklistRepository.findByGroup(group, pageable);
     }
 
     private boolean isBlacklisted(Group group, UserEntity user) {
