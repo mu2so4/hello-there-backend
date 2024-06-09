@@ -13,7 +13,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.security.JwtAuthFilter;
@@ -23,20 +22,14 @@ import ru.nsu.ccfit.muratov.hello.there.dto.auth.AuthResponseDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.LoginDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.RegistrationRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.RegistrationResponseDto;
-import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.repository.RoleRepository;
-import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;
+import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
-import java.util.Collections;
-import java.util.Date;
 import java.util.logging.Logger;
 
 @RestController
 @RequestMapping(value = "/api/auth")
 @Tag(name = "Authentication")
 public class AuthenticationController {
-    @Autowired
-    private PasswordEncoder passwordEncoder;
     @Autowired
     private AuthenticationManager authenticationManager;
 
@@ -46,11 +39,7 @@ public class AuthenticationController {
     private TokenBlacklist tokenBlacklist;
 
     @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-
-    private static final String USER_ROLE_NAME = "USER";
+    private UserEntityService userEntityService;
 
     private static final Logger logger = Logger.getLogger(AuthenticationController.class.getCanonicalName());
 
@@ -72,16 +61,7 @@ public class AuthenticationController {
     @PostMapping(value = "/register", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
     public RegistrationResponseDto registerNewUser(@RequestBody RegistrationRequestDto form) {
-        UserEntity user = new UserEntity();
-        user.setUsername(form.getUsername());
-        user.setPassword(passwordEncoder.encode(form.getPassword()));
-        user.setFirstName(form.getFirstName());
-        user.setLastName(form.getLastName());
-        user.setRegistrationTime(new Date());
-        user.setBirthday(form.getBirthday());
-        user.setRoles(Collections.singleton(roleRepository.findByName(USER_ROLE_NAME)));
-        UserEntity savedUser = userRepository.save(user);
-        return RegistrationResponseDto.createResponse(savedUser);
+        return new RegistrationResponseDto(userEntityService.registerUser(form));
     }
 
     @Operation(
@@ -94,7 +74,7 @@ public class AuthenticationController {
             ),
             @ApiResponse(
                     description = "Invalid credentials",
-                    responseCode = "401",
+                    responseCode = "400",
                     content = @Content
             )
     })
