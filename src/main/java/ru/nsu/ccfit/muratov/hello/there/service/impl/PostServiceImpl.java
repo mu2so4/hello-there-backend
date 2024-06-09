@@ -54,6 +54,15 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public Post getSinglePost(Integer id, UserEntity requester) throws AccessDeniedException, ResourceNotFoundException {
+        Post post = findById(id);
+        if(groupService.isBlacklisted(post.getGroup(), requester)) {
+            throw new AccessDeniedException("Cannot access group posts blocked a user");
+        }
+        return post;
+    }
+
+    @Override
     public Post update(Post post, String newContent, UserEntity requester) throws AccessDeniedException {
         Group group = post.getGroup();
         if(!groupService.checkOwner(group, requester)) {

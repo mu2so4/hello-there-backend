@@ -14,6 +14,7 @@ public interface PostService {
     Page<Post> getGroupPosts(Group group, Pageable pageable, UserEntity requester) throws AccessDeniedException;
 
     Post create(Group group, String content, UserEntity requester) throws AccessDeniedException;
+    Post getSinglePost(Integer id, UserEntity requester) throws AccessDeniedException, ResourceNotFoundException;
     Post update(Post post, String newContent, UserEntity requester) throws AccessDeniedException;
     void delete(Post post, UserEntity requester) throws AccessDeniedException;
 }
