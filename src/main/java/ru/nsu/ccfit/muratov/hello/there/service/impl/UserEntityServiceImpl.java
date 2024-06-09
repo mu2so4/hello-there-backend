@@ -1,13 +1,17 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.RegistrationRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.entity.UserBlacklist;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.UserBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
+import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.UserNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.repository.RoleRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserBlacklistRepository;
@@ -54,6 +58,29 @@ public class UserEntityServiceImpl implements UserEntityService {
             throw new UserNotFoundException("User not found");
         }
         return userRepository.getReferenceById(id);
+    }
+
+    @Override
+    public void addToBlacklist(UserEntity blocker, UserEntity blocked) throws BadRequestException {
+        if(blocker.equals(blocked)) {
+            throw new BadRequestException("Cannot add themselves to blacklist");
+        }
+        UserBlacklist userBlacklist = new UserBlacklist();
+        userBlacklist.setId(new UserBlacklistId(blocker.getId(), blocked.getId()));
+        userBlacklist.setBlocker(blocker);
+        userBlacklist.setBlocked(blocked);
+        userBlacklistRepository.save(userBlacklist);
+    }
+
+    @Override
+    public void removeFromBlacklist(UserEntity blocker, UserEntity blocked) {
+        userBlacklistRepository.deleteById(new UserBlacklistId(blocker.getId(), blocked.getId()));
+        userRepository.save(blocker);
+    }
+
+    @Override
+    public Page<UserBlacklist> getBlacklist(UserEntity blocker, Pageable pageable) {
+        return userBlacklistRepository.findByBlocker(blocker, pageable);
     }
 
     @Override
