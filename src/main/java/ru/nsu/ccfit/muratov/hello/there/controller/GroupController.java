@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -15,13 +14,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
+import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
+import ru.nsu.ccfit.muratov.hello.there.exception.GroupAdminAccessDeniedException;
+import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
@@ -34,8 +34,6 @@ import java.util.logging.Logger;
 public class GroupController {
     private static final Logger logger = Logger.getLogger(GroupController.class.getCanonicalName());
 
-    @Autowired
-    private GroupRepository groupRepository;
     @Autowired
     private UserEntityService userEntityService;
     @Autowired
@@ -64,7 +62,9 @@ public class GroupController {
     public List<GroupDto> getAllGroups(@RequestParam(defaultValue = "1") int page) {
         int internalPageNumber = page - 1;
         Pageable pageable = PageRequest.of(internalPageNumber, pageSize, Sort.by("id"));
-        return groupRepository.findAll(pageable).stream().map(GroupDto::new).toList();
+        return groupService.getGroupList(pageable).stream()
+                .map(GroupDto::new)
+                .toList();
     }
 
 
@@ -94,17 +94,8 @@ public class GroupController {
             )
     })
     @GetMapping("/{groupId}")
-    public GroupDto getGroupById(@PathVariable int groupId) {
-        try {
-            Group group = groupRepository.getReferenceById(groupId);
-            if(group.isDeleted()) {
-                throw new ResponseStatusException(HttpStatus.GONE, "Group was deleted");
-            }
-            return new GroupDto(group);
-        }
-        catch(EntityNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "group not found");
-        }
+    public GroupDto getGroupById(@PathVariable int groupId) throws GroupNotFoundException {
+        return new GroupDto(groupService.getById(groupId));
     }
 
 
@@ -167,38 +158,11 @@ public class GroupController {
             )
     })
     @PatchMapping("/{groupId}")
-    public GroupDto updateGroup(@PathVariable int groupId, @RequestBody GroupUpdateRequestDto newParams, @AuthenticationPrincipal UserDetails userDetails) {
-        UserEntity auth = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupRepository.getReferenceById(groupId);
-        UserEntity owner;
-        try {
-            owner = group.getOwner();
-            if(group.isDeleted()) {
-                throw new ResponseStatusException(HttpStatus.GONE, "Group was deleted");
-            }
-        }
-        catch(EntityNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
-        }
-
-        if(owner.getId() != auth.getId()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an owner of the group");
-        }
-        boolean isEmpty = true;
-        String newName = newParams.getName();
-        String newDescription = newParams.getDescription();
-        if(newName != null) {
-            isEmpty = false;
-            group.setName(newName);
-        }
-        if(newDescription != null) {
-            isEmpty = false;
-            group.setDescription(newDescription);
-        }
-        if(isEmpty) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty update request received");
-        }
-        return new GroupDto(groupRepository.save(group));
+    public GroupDto updateGroup(@PathVariable int groupId, @RequestBody GroupUpdateRequestDto newParams, @AuthenticationPrincipal UserDetails userDetails)
+            throws GroupNotFoundException, BadRequestException, GroupAdminAccessDeniedException {
+        UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
+        Group group = groupService.getById(groupId);
+        return new GroupDto(groupService.update(group, requester, newParams));
     }
 
     @Operation(
@@ -238,24 +202,10 @@ public class GroupController {
     })
     @DeleteMapping("/{groupId}")
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    public void updateGroup(@PathVariable("groupId") int groupId, @AuthenticationPrincipal UserDetails userDetails) {
-        UserEntity auth = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupRepository.getReferenceById(groupId);
-        UserEntity owner;
-        try {
-            owner = group.getOwner();
-            if(group.isDeleted()) {
-                throw new ResponseStatusException(HttpStatus.GONE, "Group already deleted");
-            }
-        }
-        catch(EntityNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
-        }
-
-        if(owner.getId() != auth.getId()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not an owner of the group");
-        }
-        group.setDeleted(true);
-        groupRepository.save(group);
+    public void updateGroup(@PathVariable("groupId") int groupId, @AuthenticationPrincipal UserDetails userDetails)
+            throws GroupNotFoundException, GroupAdminAccessDeniedException {
+        UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
+        Group group = groupService.getById(groupId);
+        groupService.delete(group, requester);
     }
 }

@@ -1,12 +1,17 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.*;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.SubscriptionId;
 import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
+import ru.nsu.ccfit.muratov.hello.there.exception.GroupAdminAccessDeniedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupBlacklistedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupBlacklistRepository;
@@ -34,8 +39,9 @@ public class GroupServiceImpl implements GroupService {
         return groupRepository.getReferenceById(id);
     }
 
-    private boolean isBlacklisted(Group group, UserEntity user) {
-        return groupBlacklistRepository.existsById(new GroupBlacklistId(group.getId(), user.getId()));
+    @Override
+    public Page<Group> getGroupList(Pageable pageable) {
+        return groupRepository.findAll(pageable);
     }
 
     @Override
@@ -82,5 +88,48 @@ public class GroupServiceImpl implements GroupService {
         }
         catch(GroupBlacklistedException ignored) {}
         return savedGroup;
+    }
+
+    @Override
+    public Group update(Group group, UserEntity requester, GroupUpdateRequestDto newData)
+            throws GroupAdminAccessDeniedException, BadRequestException {
+        if(!checkOwner(group, requester)) {
+            throw new GroupAdminAccessDeniedException("User is not an owner of the group");
+        }
+        if(group.isDeleted()) {
+            throw new ResponseStatusException(HttpStatus.GONE, "Group was deleted");
+        }
+        boolean isEmpty = true;
+        String newName = newData.getName();
+        String newDescription = newData.getDescription();
+        if(newName != null) {
+            isEmpty = false;
+            group.setName(newName);
+        }
+        if(newDescription != null) {
+            isEmpty = false;
+            group.setDescription(newDescription);
+        }
+        if(isEmpty) {
+            throw new BadRequestException("Empty update request received");
+        }
+        return groupRepository.save(group);
+    }
+
+    @Override
+    public void delete(Group group, UserEntity requester) throws GroupAdminAccessDeniedException {
+        if(!checkOwner(group, requester)) {
+            throw new GroupAdminAccessDeniedException("User is not an owner of the group");
+        }
+        group.setDeleted(true);
+        groupRepository.save(group);
+    }
+
+    private boolean isBlacklisted(Group group, UserEntity user) {
+        return groupBlacklistRepository.existsById(new GroupBlacklistId(group.getId(), user.getId()));
+    }
+
+    private boolean checkOwner(Group group, UserEntity requester) {
+        return requester.equals(group.getOwner());
     }
 }

@@ -1,6 +1,6 @@
 package ru.nsu.ccfit.muratov.hello.there.exception;
 
-public class BlacklistedException extends Exception {
+public class BlacklistedException extends AccessDeniedException {
     public BlacklistedException() {
         super();
     }
