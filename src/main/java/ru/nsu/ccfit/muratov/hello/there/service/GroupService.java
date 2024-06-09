@@ -18,4 +18,6 @@ public interface GroupService {
     void unsubscribe(Group group, UserEntity user) throws BadRequestException;
 
     List<Subscription> getSubscriberList(Group group, UserEntity requester, Pageable pageable) throws GroupBlacklistedException;
+
+    Group createGroup(UserEntity owner, String name, String description);
 }

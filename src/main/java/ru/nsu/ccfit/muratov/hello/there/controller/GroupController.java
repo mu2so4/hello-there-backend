@@ -22,9 +22,9 @@ import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
+import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -38,6 +38,8 @@ public class GroupController {
     private GroupRepository groupRepository;
     @Autowired
     private UserEntityService userEntityService;
+    @Autowired
+    private GroupService groupService;
 
     @Value("${data.group.page.size}")
     private int pageSize;
@@ -116,7 +118,7 @@ public class GroupController {
                     responseCode = "201"
             ),
             @ApiResponse(
-                    description = "Invalid group parameters or some of them not set",
+                    description = "Bad group parameters",
                     responseCode = "400",
                     content = @Content
             ),
@@ -130,13 +132,7 @@ public class GroupController {
     @ResponseStatus(code = HttpStatus.CREATED)
     public GroupDto createGroup(@RequestBody GroupCreateRequestDto params, @AuthenticationPrincipal UserDetails userDetails) {
         UserEntity owner = userEntityService.getUserByUserDetails(userDetails);
-        Group group = new Group();
-        group.setOwner(owner);
-        group.setCreateTime(new Date());
-        group.setName(params.getName());
-        group.setDescription(params.getDescription());
-        Group savedGroup = groupRepository.save(group);
-        return new GroupDto(savedGroup);
+        return new GroupDto(groupService.createGroup(owner, params.getName(), params.getDescription()));
     }
 
 

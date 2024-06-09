@@ -91,7 +91,7 @@ public class SubscriberController {
 
 
     @Operation(
-            summary = "Subscribe on a group.",
+            summary = "Subscribe on a group",
             description = "Subscribes on a group. " +
                     "A user cannot subscribe if they are blocked by the group."
     )
@@ -139,7 +139,7 @@ public class SubscriberController {
     }
 
     @Operation(
-            summary = "Unsubscribe from a group.",
+            summary = "Unsubscribe from a group",
             description = "Unsubscribes from a group. " +
                     "A user cannot subscribe if they are the group's owner."
     )

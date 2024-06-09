@@ -34,7 +34,7 @@ public class GroupServiceImpl implements GroupService {
         return groupRepository.getReferenceById(id);
     }
 
-    public boolean isBlacklisted(Group group, UserEntity user) {
+    private boolean isBlacklisted(Group group, UserEntity user) {
         return groupBlacklistRepository.existsById(new GroupBlacklistId(group.getId(), user.getId()));
     }
 
@@ -67,5 +67,20 @@ public class GroupServiceImpl implements GroupService {
             throw new GroupBlacklistedException("Cannot subscribe to group blocked the user");
         }
         return subscriptionRepository.findByGroup(group, pageable);
+    }
+
+    @Override
+    public Group createGroup(UserEntity owner, String name, String description) {
+        Group group = new Group();
+        group.setOwner(owner);
+        group.setCreateTime(new Date());
+        group.setName(name);
+        group.setDescription(description);
+        Group savedGroup = groupRepository.save(group);
+        try {
+            subscribe(group, owner);
+        }
+        catch(GroupBlacklistedException ignored) {}
+        return savedGroup;
     }
 }
