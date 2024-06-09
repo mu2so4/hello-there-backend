@@ -19,7 +19,7 @@ import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.group.GroupBlacklistDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.group.GroupBlacklistRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.GroupBlacklist;
-import ru.nsu.ccfit.muratov.hello.there.entity.GroupBlacklistId;
+import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;

@@ -1,4 +1,4 @@
-package ru.nsu.ccfit.muratov.hello.there.entity;
+package ru.nsu.ccfit.muratov.hello.there.entity.id;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

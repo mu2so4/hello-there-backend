@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import ru.nsu.ccfit.muratov.hello.there.entity.UserBlacklistId;
+import ru.nsu.ccfit.muratov.hello.there.entity.id.UserBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.UserRepository;

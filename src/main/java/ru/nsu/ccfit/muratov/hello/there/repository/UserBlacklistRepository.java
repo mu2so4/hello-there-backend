@@ -5,7 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserBlacklist;
-import ru.nsu.ccfit.muratov.hello.there.entity.UserBlacklistId;
+import ru.nsu.ccfit.muratov.hello.there.entity.id.UserBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 
 @Repository

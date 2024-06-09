@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.muratov.hello.there.entity.*;
+import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.SubscriptionId;
 import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupBlacklistedException;
