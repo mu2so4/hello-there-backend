@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.muratov.hello.there.repository;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
@@ -20,7 +21,7 @@ public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    private static UserEntity createDummyUser() throws ParseException {
+    public static UserEntity createDummyUser() throws ParseException {
         Role role = new Role();
         role.setName("USER");
         UserEntity user = new UserEntity();
@@ -37,7 +38,8 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void createUser_thenSuccess() throws ParseException {
+    @DisplayName("Create user")
+    public void createUser_thenSave_thenSuccess() throws ParseException {
         UserEntity user = createDummyUser();
 
         UserEntity savedUser = userRepository.save(user);
