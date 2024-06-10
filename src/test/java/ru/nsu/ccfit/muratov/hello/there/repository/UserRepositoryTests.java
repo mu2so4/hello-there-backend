@@ -13,9 +13,7 @@ import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2)
@@ -25,11 +23,13 @@ public class UserRepositoryTests {
     @Autowired
     private RoleRepository roleRepository;
 
-    public UserEntity createDummyUser() throws ParseException {
-        Role role = new Role();
-        role.setName("USER");
-        roleRepository.save(role);
+    private final Role role = new Role();
 
+    public UserRepositoryTests() {
+        role.setName("USER");
+    }
+
+    public UserEntity createDummyUser() throws ParseException {
         UserEntity user = new UserEntity();
         user.setUsername("mu2so4");
         user.setPassword("1234");
@@ -52,20 +52,23 @@ public class UserRepositoryTests {
 
         UserEntity savedUser = userRepository.save(user);
 
-        Assertions.assertThat(savedUser).isNotNull();
+        Assertions.assertThat(savedUser)
+                .isNotNull()
+                .isEqualTo(user);
         Assertions.assertThat(savedUser.getId()).isGreaterThan(0);
-        Assertions.assertThat(savedUser).isEqualTo(user);
     }
 
     @Test
-    @DisplayName("Get user by ID")
+    @DisplayName("Find user by ID")
     public void getUser() throws ParseException {
         UserEntity user = createDummyUser();
 
         userRepository.save(user);
         UserEntity dbUser = userRepository.getReferenceById(user.getId());
 
-        Assertions.assertThat(dbUser).isNotNull().isEqualTo(user);
+        Assertions.assertThat(dbUser)
+                .isNotNull()
+                .isEqualTo(user);
     }
 
     @Test
@@ -82,7 +85,9 @@ public class UserRepositoryTests {
         savedUser.setLastName(newLastName);
         var updatedUser = userRepository.save(savedUser);
 
-        Assertions.assertThat(updatedUser).isNotNull().isEqualTo(savedUser);
+        Assertions.assertThat(updatedUser)
+                .isNotNull()
+                .isEqualTo(savedUser);
         Assertions.assertThat(updatedUser.getId()).isEqualTo(id);
         Assertions.assertThat(updatedUser.getFirstName()).isEqualTo(newFirstName);
         Assertions.assertThat(updatedUser.getLastName()).isEqualTo(newLastName);
@@ -98,6 +103,40 @@ public class UserRepositoryTests {
 
         Assertions.assertThatThrownBy(() -> userRepository.getReferenceById(user.getId()))
                 .hasCauseInstanceOf(EntityNotFoundException.class);
+    }
 
+    @Test
+    @DisplayName("Retrieve several users")
+    public void getSeveralUsers() throws ParseException {
+        UserEntity user1 = createDummyUser();
+        UserEntity user2 = createDummyUser();
+        user2.setUsername("muso4");
+        UserEntity user3 = createDummyUser();
+        user3.setUsername("def");
+        List<UserEntity> users = List.of(user1, user2, user3);
+
+        List<UserEntity> savedUsers = userRepository.saveAll(users);
+
+        Assertions.assertThat(savedUsers)
+                .isNotNull()
+                .hasSize(users.size())
+                .containsAll(users);
+    }
+
+    @Test
+    @DisplayName("Find user by username")
+    public void findByUsername() throws ParseException {
+        UserEntity user = createDummyUser();
+        String username = "CH3COOMu";
+        String oldUsername = "saoehu";
+        user.setUsername(username);
+        userRepository.save(user);
+
+        var foundUser = userRepository.findByUsername(username).orElseThrow();
+        Assertions.assertThat(foundUser)
+                .isNotNull()
+                .isEqualTo(user);
+        var noUser = userRepository.findByUsername(oldUsername);
+        Assertions.assertThat(noUser.isPresent()).isFalse();
     }
 }
