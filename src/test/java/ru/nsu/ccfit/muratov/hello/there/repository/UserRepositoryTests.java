@@ -2,6 +2,7 @@ package ru.nsu.ccfit.muratov.hello.there.repository;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,6 @@ import java.util.*;
 public class UserRepositoryTests {
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
 
     private final Role role = new Role();
 
@@ -138,5 +137,17 @@ public class UserRepositoryTests {
                 .isEqualTo(user);
         var noUser = userRepository.findByUsername(oldUsername);
         Assertions.assertThat(noUser.isPresent()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Duplicate username")
+    public void duplicateUsername() throws ParseException {
+        UserEntity user1 = createDummyUser();
+        UserEntity user2 = createDummyUser();
+        user2.setLastName("Murashov");
+
+        userRepository.save(user1);
+        Assertions.assertThatThrownBy(() -> userRepository.save(user2))
+                .hasCauseInstanceOf(ConstraintViolationException.class);
     }
 }
