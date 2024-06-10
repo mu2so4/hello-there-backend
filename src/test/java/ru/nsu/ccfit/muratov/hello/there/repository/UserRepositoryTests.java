@@ -5,6 +5,8 @@ import org.assertj.core.api.Assertions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -12,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import ru.nsu.ccfit.muratov.hello.there.entity.Role;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -149,5 +152,28 @@ public class UserRepositoryTests {
         userRepository.save(user1);
         Assertions.assertThatThrownBy(() -> userRepository.save(user2))
                 .hasCauseInstanceOf(ConstraintViolationException.class);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "LastName,java.lang.String,true",
+            "FirstName,java.lang.String,true",
+            "Username,java.lang.String,true",
+            "Password,java.lang.String,true",
+            "Birthday,java.util.Date,true",
+            "RegistrationTime,java.util.Date,true",
+    })
+    @DisplayName("Not null check")
+    public void checkNotNull(String methodName, Class<?> fieldType, boolean isNotNull)
+            throws ParseException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        UserEntity user = createDummyUser();
+        UserEntity.class.getMethod("set" + methodName, fieldType).invoke(user, (Object) null);
+        if(isNotNull) {
+            Assertions.assertThatThrownBy(() -> userRepository.save(user))
+                    .hasCauseInstanceOf(ConstraintViolationException.class);
+        }
+        else {
+            Assertions.assertThatNoException().isThrownBy(() -> userRepository.save(user));
+        }
     }
 }
