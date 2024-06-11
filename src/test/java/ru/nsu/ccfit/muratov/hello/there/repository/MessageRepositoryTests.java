@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.muratov.hello.there.repository;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,35 +28,20 @@ public class MessageRepositoryTests {
     @Autowired
     private UserRepository userRepository;
 
-    private static UserEntity createTestUser(String username) throws ParseException {
-        UserEntity user = new UserEntity();
-        user.setUsername(username);
-        user.setPassword("1234");
-        user.setFirstName("Maxim");
-        user.setLastName("Muratov");
-        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
-        Date date = parser.parse("2002-01-01");
-        user.setBirthday(date);
-        user.setRegistrationTime(new Date());
-        return user;
-    }
+    private Message message;
 
-    private static Message createTestMessage(UserEntity sender, UserEntity receiver, String content) {
-        Message message = new Message();
-        message.setContent(content);
-        message.setSender(sender);
-        message.setReceiver(receiver);
-        message.setSendTime(new Date());
-        return message;
+    @BeforeEach
+    public void init() throws ParseException {
+        UserEntity sender = createTestUser("mu2so4");
+        UserEntity receiver = createTestUser("muso4");
+        userRepository.saveAll(List.of(sender, receiver));
+        message = createTestMessage(sender, receiver, "Hello there!");
     }
 
     @Test
     @DisplayName("Create message")
-    public void create() throws ParseException {
-        UserEntity sender = createTestUser("mu2so4");
-        UserEntity receiver = createTestUser("muso4");
-        userRepository.saveAll(List.of(sender, receiver));
-        Message message = createTestMessage(sender, receiver, "Hello there!");
+    public void create() {
+
 
         var savedMessage = messageRepository.save(message);
 
@@ -68,11 +54,7 @@ public class MessageRepositoryTests {
 
     @Test
     @DisplayName("Get message by id")
-    public void getById() throws ParseException {
-        UserEntity sender = createTestUser("mu2so4");
-        UserEntity receiver = createTestUser("muso4");
-        userRepository.saveAll(List.of(sender, receiver));
-        Message message = createTestMessage(sender, receiver, "Hello there!");
+    public void getById() {
         messageRepository.save(message);
 
         var savedMessage = messageRepository.getReferenceById(message.getId());
@@ -84,11 +66,7 @@ public class MessageRepositoryTests {
 
     @Test
     @DisplayName("Update message")
-    public void update() throws ParseException {
-        UserEntity sender = createTestUser("mu2so4");
-        UserEntity receiver = createTestUser("muso4");
-        userRepository.saveAll(List.of(sender, receiver));
-        Message message = createTestMessage(sender, receiver, "Hello there!");
+    public void update() {
         messageRepository.save(message);
         Integer id = message.getId();
 
@@ -106,11 +84,7 @@ public class MessageRepositoryTests {
 
     @Test
     @DisplayName("Delete message")
-    public void delete() throws ParseException {
-        UserEntity sender = createTestUser("mu2so4");
-        UserEntity receiver = createTestUser("muso4");
-        userRepository.saveAll(List.of(sender, receiver));
-        Message message = createTestMessage(sender, receiver, "Hello there!");
+    public void delete() {
         messageRepository.save(message);
         Integer id = message.getId();
 
@@ -150,5 +124,27 @@ public class MessageRepositoryTests {
         Assertions.assertThat(savedMessages)
                 .isNotEmpty()
                 .containsExactlyElementsOf(messagesReversed);
+    }
+
+    private static UserEntity createTestUser(String username) throws ParseException {
+        UserEntity user = new UserEntity();
+        user.setUsername(username);
+        user.setPassword("1234");
+        user.setFirstName("Maxim");
+        user.setLastName("Muratov");
+        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = parser.parse("2002-01-01");
+        user.setBirthday(date);
+        user.setRegistrationTime(new Date());
+        return user;
+    }
+
+    private static Message createTestMessage(UserEntity sender, UserEntity receiver, String content) {
+        Message message = new Message();
+        message.setContent(content);
+        message.setSender(sender);
+        message.setReceiver(receiver);
+        message.setSendTime(new Date());
+        return message;
     }
 }

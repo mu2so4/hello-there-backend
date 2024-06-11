@@ -2,6 +2,7 @@ package ru.nsu.ccfit.muratov.hello.there.repository;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,34 +24,19 @@ public class GroupRepositoryTests {
     @Autowired
     private UserRepository userRepository;
 
-    public Group createTestGroup(UserEntity owner) {
-        Group group = new Group();
-        group.setName("Dummy group");
-        group.setDescription("Group for testing repository");
-        group.setCreateTime(new Date());
-        userRepository.save(owner);
-        group.setOwner(owner);
-        return group;
-    }
+    private Group group;
 
-    public UserEntity createTestUser() throws ParseException {
-        UserEntity user = new UserEntity();
-        user.setUsername("mu2so4");
-        user.setPassword("1234");
-        user.setFirstName("Maxim");
-        user.setLastName("Muratov");
-        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
-        Date date = parser.parse("2002-01-01");
-        user.setBirthday(date);
-        user.setRegistrationTime(new Date());
-        return user;
+    @BeforeEach
+    public void init() throws ParseException {
+        UserEntity owner = createTestUser();
+        group = createTestGroup(owner);
+        userRepository.save(owner);
     }
 
     @Test
     @DisplayName("Create group")
     public void create() throws ParseException {
-        UserEntity user = createTestUser();
-        Group group = createTestGroup(user);
+
 
         Group savedGroup = groupRepository.save(group);
 
@@ -62,9 +48,7 @@ public class GroupRepositoryTests {
 
     @Test
     @DisplayName("Get group by id")
-    public void getById() throws ParseException {
-        UserEntity user = createTestUser();
-        Group group = createTestGroup(user);
+    public void getById() {
         groupRepository.save(group);
 
         Group foundGroup = groupRepository.getReferenceById(group.getId());
@@ -76,9 +60,7 @@ public class GroupRepositoryTests {
 
     @Test
     @DisplayName("Update group")
-    public void update() throws ParseException {
-        UserEntity user = createTestUser();
-        Group group = createTestGroup(user);
+    public void update() {
         Group savedGroup = groupRepository.save(group);
         Integer id = group.getId();
 
@@ -94,14 +76,34 @@ public class GroupRepositoryTests {
 
     @Test
     @DisplayName("Delete group")
-    public void delete() throws ParseException {
-        UserEntity user = createTestUser();
-        Group group = createTestGroup(user);
+    public void delete() {
         groupRepository.save(group);
 
         groupRepository.delete(group);
 
         Assertions.assertThatThrownBy(() -> groupRepository.getReferenceById(group.getId()))
                 .hasCauseInstanceOf(EntityNotFoundException.class);
+    }
+
+    private static Group createTestGroup(UserEntity owner) {
+        Group group = new Group();
+        group.setName("Dummy group");
+        group.setDescription("Group for testing repository");
+        group.setCreateTime(new Date());
+        group.setOwner(owner);
+        return group;
+    }
+
+    private static UserEntity createTestUser() throws ParseException {
+        UserEntity user = new UserEntity();
+        user.setUsername("mu2so4");
+        user.setPassword("1234");
+        user.setFirstName("Maxim");
+        user.setLastName("Muratov");
+        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = parser.parse("2002-01-01");
+        user.setBirthday(date);
+        user.setRegistrationTime(new Date());
+        return user;
     }
 }

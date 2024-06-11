@@ -3,6 +3,7 @@ package ru.nsu.ccfit.muratov.hello.there.repository;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.hibernate.exception.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,13 +26,17 @@ public class UserRepositoryTests {
     @Autowired
     private UserRepository userRepository;
 
-    private final Role role = new Role();
+    private Role role;
+    private UserEntity user;
 
-    public UserRepositoryTests() {
+    @BeforeEach
+    public void init() throws ParseException {
+        role = new Role();
         role.setName("USER");
+        user = createTestUser();
     }
 
-    public UserEntity createDummyUser() throws ParseException {
+    private UserEntity createTestUser() throws ParseException {
         UserEntity user = new UserEntity();
         user.setUsername("mu2so4");
         user.setPassword("1234");
@@ -49,8 +54,8 @@ public class UserRepositoryTests {
 
     @Test
     @DisplayName("Create user")
-    public void createUser_thenSave() throws ParseException {
-        UserEntity user = createDummyUser();
+    public void createUser_thenSave() {
+
 
         UserEntity savedUser = userRepository.save(user);
 
@@ -62,10 +67,9 @@ public class UserRepositoryTests {
 
     @Test
     @DisplayName("Find user by ID")
-    public void getUser() throws ParseException {
-        UserEntity user = createDummyUser();
-
+    public void getUser() {
         userRepository.save(user);
+
         UserEntity dbUser = userRepository.getReferenceById(user.getId());
 
         Assertions.assertThat(dbUser)
@@ -75,8 +79,7 @@ public class UserRepositoryTests {
 
     @Test
     @DisplayName("Update user")
-    public void updateUser() throws ParseException {
-        UserEntity user = createDummyUser();
+    public void updateUser() {
         userRepository.save(user);
         Integer id = user.getId();
 
@@ -97,8 +100,7 @@ public class UserRepositoryTests {
 
     @Test
     @DisplayName("Delete user")
-    public void deleteUser() throws ParseException {
-        UserEntity user = createDummyUser();
+    public void deleteUser() {
         userRepository.save(user);
 
         userRepository.delete(user);
@@ -110,10 +112,10 @@ public class UserRepositoryTests {
     @Test
     @DisplayName("Retrieve several users")
     public void getSeveralUsers() throws ParseException {
-        UserEntity user1 = createDummyUser();
-        UserEntity user2 = createDummyUser();
+        UserEntity user1 = createTestUser();
+        UserEntity user2 = createTestUser();
         user2.setUsername("muso4");
-        UserEntity user3 = createDummyUser();
+        UserEntity user3 = createTestUser();
         user3.setUsername("def");
         List<UserEntity> users = List.of(user1, user2, user3);
 
@@ -127,8 +129,7 @@ public class UserRepositoryTests {
 
     @Test
     @DisplayName("Find user by username")
-    public void findByUsername() throws ParseException {
-        UserEntity user = createDummyUser();
+    public void findByUsername() {
         String username = "CH3COOMu";
         String oldUsername = "saoehu";
         user.setUsername(username);
@@ -145,8 +146,8 @@ public class UserRepositoryTests {
     @Test
     @DisplayName("Duplicate username")
     public void duplicateUsername() throws ParseException {
-        UserEntity user1 = createDummyUser();
-        UserEntity user2 = createDummyUser();
+        UserEntity user1 = createTestUser();
+        UserEntity user2 = createTestUser();
         user2.setLastName("Murashov");
 
         userRepository.save(user1);
@@ -166,7 +167,7 @@ public class UserRepositoryTests {
     @DisplayName("Not null check")
     public void checkNotNull(String methodName, Class<?> fieldType, boolean isNotNull)
             throws ParseException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        UserEntity user = createDummyUser();
+        UserEntity user = createTestUser();
         UserEntity.class.getMethod("set" + methodName, fieldType).invoke(user, (Object) null);
         if(isNotNull) {
             Assertions.assertThatThrownBy(() -> userRepository.save(user))

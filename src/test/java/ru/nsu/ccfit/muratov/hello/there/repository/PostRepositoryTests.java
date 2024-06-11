@@ -2,6 +2,7 @@ package ru.nsu.ccfit.muratov.hello.there.repository;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,12 +30,22 @@ public class PostRepositoryTests {
     @Autowired
     private GroupRepository groupRepository;
 
+    private Group group;
+    private Post post;
+
+    @BeforeEach
+    public void init() {
+        UserEntity owner = createTestUser();
+        group = createTestGroup(owner);
+        post = createTestPost(group);
+        userRepository.save(owner);
+        groupRepository.save(group);
+    }
+
     @Test
     @DisplayName("Create post")
     public void create() {
-        UserEntity owner = createTestUser();
-        Group group = createTestGroup(owner);
-        Post post = createTestPost(group);
+
 
         Post savedPost = postRepository.save(post);
 
@@ -48,9 +59,6 @@ public class PostRepositoryTests {
     @Test
     @DisplayName("Get post by ID")
     public void getById() {
-        UserEntity owner = createTestUser();
-        Group group = createTestGroup(owner);
-        Post post = createTestPost(group);
         postRepository.save(post);
 
         var found = postRepository.getReferenceById(post.getId());
@@ -63,9 +71,6 @@ public class PostRepositoryTests {
     @Test
     @DisplayName("Update post")
     public void update() throws InterruptedException {
-        UserEntity owner = createTestUser();
-        Group group = createTestGroup(owner);
-        Post post = createTestPost(group);
         Post savedPost = postRepository.save(post);
         Integer id = post.getId();
 
@@ -90,9 +95,6 @@ public class PostRepositoryTests {
     @Test
     @DisplayName("Delete post")
     public void delete() {
-        UserEntity owner = createTestUser();
-        Group group = createTestGroup(owner);
-        Post post = createTestPost(group);
         postRepository.save(post);
         Integer id = post.getId();
 
@@ -105,8 +107,6 @@ public class PostRepositoryTests {
     @Test
     @DisplayName("Get posts by host group")
     public void getByGroup() throws InterruptedException {
-        UserEntity owner = createTestUser();
-        Group group = createTestGroup(owner);
         Post post1 = createTestPost(group);
         Thread.sleep(2);
         Post post2 = createTestPost(group);
@@ -126,26 +126,24 @@ public class PostRepositoryTests {
                 .containsExactlyElementsOf(reversedPosts);
     }
 
-    private Post createTestPost(Group hostGroup) {
+    private static Post createTestPost(Group hostGroup) {
         Post post = new Post();
-        groupRepository.save(hostGroup);
         post.setGroup(hostGroup);
         post.setCreateTime(new Date());
         post.setContent("This is test post");
         return post;
     }
 
-    private Group createTestGroup(UserEntity owner) {
+    private static Group createTestGroup(UserEntity owner) {
         Group group = new Group();
         group.setName("Dummy group");
         group.setDescription("Group for testing repository");
         group.setCreateTime(new Date());
-        userRepository.save(owner);
         group.setOwner(owner);
         return group;
     }
 
-    private UserEntity createTestUser() {
+    private static UserEntity createTestUser() {
         UserEntity user = new UserEntity();
         user.setUsername("mu2so4");
         user.setPassword("1234");
