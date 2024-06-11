@@ -17,7 +17,7 @@ import java.util.Date;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2)
-public class GroupRepositoryTest {
+public class GroupRepositoryTests {
     @Autowired
     private GroupRepository groupRepository;
     @Autowired

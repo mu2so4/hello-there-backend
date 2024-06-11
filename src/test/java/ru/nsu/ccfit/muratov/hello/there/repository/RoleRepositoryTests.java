@@ -1,6 +1,7 @@
 package ru.nsu.ccfit.muratov.hello.there.repository;
 
 import org.assertj.core.api.Assertions;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,23 @@ public class RoleRepositoryTests {
 
         var savedRole = roleRepository.save(role);
 
-        Assertions.assertThat(savedRole).isNotNull().isEqualTo(role);
+        Assertions.assertThat(savedRole)
+                .isNotNull()
+                .isEqualTo(role);
         Assertions.assertThat(savedRole.getId()).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("Role name unique constraint violated")
+    public void duplicateUserName() {
+        String name = "USER";
+        Role role1 = new Role(), role2 = new Role();
+        role1.setName(name);
+        role2.setName(name);
+
+        roleRepository.save(role1);
+
+        Assertions.assertThatThrownBy(() -> roleRepository.save(role2))
+                .hasCauseInstanceOf(ConstraintViolationException.class);
     }
 }
