@@ -7,7 +7,8 @@ import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
 import java.util.Date;
 
 @Data
-@Entity(name = "group_blacklist")
+@Table(name = "group_blacklist")
+@Entity
 public class GroupBlacklist {
     @EmbeddedId
     private GroupBlacklistId id;
@@ -22,6 +23,9 @@ public class GroupBlacklist {
     @JoinColumn(name = "blocked")
     private UserEntity blockedUser;
 
+    @Column(nullable = false)
+    @Temporal(TemporalType.DATE) //todo WTF import returns without this @ java.sql.Timestamp instead of java.util.Date like simple-primary-keyed entities?
     private Date blockTime;
+    @Column(nullable = false)
     private String reason;
 }

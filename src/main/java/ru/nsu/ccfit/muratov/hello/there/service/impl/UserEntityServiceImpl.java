@@ -43,7 +43,7 @@ public class UserEntityServiceImpl implements UserEntityService {
         user.setLastName(form.getLastName());
         user.setRegistrationTime(new Date());
         user.setBirthday(form.getBirthday());
-        user.setRoles(Collections.singleton(roleRepository.findByName(USER_ROLE_NAME)));
+        user.setRoles(Collections.singleton(roleRepository.findByName(USER_ROLE_NAME))); //fixme to mutable set
         return userRepository.save(user);
     }
 

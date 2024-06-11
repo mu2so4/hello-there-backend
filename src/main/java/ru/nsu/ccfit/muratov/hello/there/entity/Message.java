@@ -13,14 +13,17 @@ public class Message {
     private int id;
 
     @ManyToOne
-    @JoinColumn(name = "sender")
+    @JoinColumn(name = "sender", nullable = false)
     private UserEntity sender;
     @ManyToOne
-    @JoinColumn(name = "receiver")
+    @JoinColumn(name = "receiver", nullable = false)
     private UserEntity receiver;
 
+    @Column(nullable = false)
     private String content;
+    @Column(nullable = false)
     private Date sendTime;
+    @Column
     private Date lastEditTime;
 
     @ManyToOne
