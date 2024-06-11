@@ -22,5 +22,7 @@ public class Subscription {
     @JoinColumn(name = "subscriber")
     private UserEntity subscriber;
 
+    @Column(nullable = false)
+    @Temporal(TemporalType.DATE)
     private Date subscriptionTime;
 }
