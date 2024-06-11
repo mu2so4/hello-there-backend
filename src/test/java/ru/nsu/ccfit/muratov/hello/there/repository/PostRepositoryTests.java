@@ -8,12 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.Post;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 
-import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2)
@@ -57,7 +61,7 @@ public class PostRepositoryTests {
     }
 
     @Test
-    @DisplayName("Update")
+    @DisplayName("Update post")
     public void update() throws InterruptedException {
         UserEntity owner = createTestUser();
         Group group = createTestGroup(owner);
@@ -84,8 +88,8 @@ public class PostRepositoryTests {
     }
 
     @Test
-    @DisplayName("Delete group")
-    public void delete() throws ParseException {
+    @DisplayName("Delete post")
+    public void delete() {
         UserEntity owner = createTestUser();
         Group group = createTestGroup(owner);
         Post post = createTestPost(group);
@@ -96,6 +100,30 @@ public class PostRepositoryTests {
 
         Assertions.assertThatThrownBy(() -> postRepository.getReferenceById(id))
                 .hasCauseInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Get posts by host group")
+    public void getByGroup() throws InterruptedException {
+        UserEntity owner = createTestUser();
+        Group group = createTestGroup(owner);
+        Post post1 = createTestPost(group);
+        Thread.sleep(2);
+        Post post2 = createTestPost(group);
+        post2.setContent("Bye!");
+        List<Post> posts = new ArrayList<>();
+        posts.add(post1);
+        posts.add(post2);
+        postRepository.saveAll(posts);
+        List<Post> reversedPosts = new ArrayList<>(posts);
+        Collections.reverse(reversedPosts);
+
+        var savedPosts = postRepository.findByGroup(group,
+                PageRequest.of(0, 10, Sort.by("createTime").descending()));
+
+        Assertions.assertThat(savedPosts)
+                .isNotNull()
+                .containsExactlyElementsOf(reversedPosts);
     }
 
     private Post createTestPost(Group hostGroup) {
