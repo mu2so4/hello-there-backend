@@ -39,7 +39,7 @@ public class UserBlacklistRepositoryTests {
     }
 
     @Test
-    @DisplayName("Add to blacklist")
+    @DisplayName("Add to user blacklist")
     public void create() {
 
 
@@ -51,7 +51,7 @@ public class UserBlacklistRepositoryTests {
     }
 
     @Test
-    @DisplayName("Get blacklist record by blocker and blocked")
+    @DisplayName("Get user blacklist record by blocker and blocked")
     public void getById() {
         userBlacklistRepository.save(userBlacklist);
 
@@ -63,7 +63,7 @@ public class UserBlacklistRepositoryTests {
     }
 
     @Test
-    @DisplayName("Remove from blacklist")
+    @DisplayName("Remove from user blacklist")
     public void delete() {
         userBlacklistRepository.save(userBlacklist);
 
