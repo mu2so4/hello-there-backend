@@ -23,7 +23,7 @@ public class GroupRepositoryTests {
     @Autowired
     private UserRepository userRepository;
 
-    public Group createDummyGroup(UserEntity owner) {
+    public Group createTestGroup(UserEntity owner) {
         Group group = new Group();
         group.setName("Dummy group");
         group.setDescription("Group for testing repository");
@@ -33,7 +33,7 @@ public class GroupRepositoryTests {
         return group;
     }
 
-    public UserEntity createDummyUser() throws ParseException {
+    public UserEntity createTestUser() throws ParseException {
         UserEntity user = new UserEntity();
         user.setUsername("mu2so4");
         user.setPassword("1234");
@@ -49,8 +49,8 @@ public class GroupRepositoryTests {
     @Test
     @DisplayName("Create group")
     public void create() throws ParseException {
-        UserEntity user = createDummyUser();
-        Group group = createDummyGroup(user);
+        UserEntity user = createTestUser();
+        Group group = createTestGroup(user);
 
         Group savedGroup = groupRepository.save(group);
 
@@ -63,8 +63,8 @@ public class GroupRepositoryTests {
     @Test
     @DisplayName("Get group by id")
     public void getById() throws ParseException {
-        UserEntity user = createDummyUser();
-        Group group = createDummyGroup(user);
+        UserEntity user = createTestUser();
+        Group group = createTestGroup(user);
         groupRepository.save(group);
 
         Group foundGroup = groupRepository.getReferenceById(group.getId());
@@ -77,8 +77,8 @@ public class GroupRepositoryTests {
     @Test
     @DisplayName("Update group")
     public void update() throws ParseException {
-        UserEntity user = createDummyUser();
-        Group group = createDummyGroup(user);
+        UserEntity user = createTestUser();
+        Group group = createTestGroup(user);
         Group savedGroup = groupRepository.save(group);
         Integer id = group.getId();
 
@@ -95,8 +95,8 @@ public class GroupRepositoryTests {
     @Test
     @DisplayName("Delete group")
     public void delete() throws ParseException {
-        UserEntity user = createDummyUser();
-        Group group = createDummyGroup(user);
+        UserEntity user = createTestUser();
+        Group group = createTestGroup(user);
         groupRepository.save(group);
 
         groupRepository.delete(group);
