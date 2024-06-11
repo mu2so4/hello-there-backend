@@ -50,6 +50,8 @@ public class GroupBlacklistRepositoryTests {
 
         var saved = groupBlacklistRepository.save(blacklistRecord);
 
+        Assertions.assertThat(saved.getBlockTime())
+                .hasSameTimeAs(blacklistRecord.getBlockTime());
         Assertions.assertThat(saved)
                 .isNotNull()
                 .isEqualTo(blacklistRecord);
@@ -124,6 +126,8 @@ public class GroupBlacklistRepositoryTests {
         blacklistRecord.setGroup(blocker);
         blacklistRecord.setBlockedUser(blocked);
         blacklistRecord.setId(new GroupBlacklistId(blocker.getId(), blocked.getId()));
+        blacklistRecord.setReason("I'm just kidding");
+        blacklistRecord.setBlockTime(new Date());
         return blacklistRecord;
     }
 }
