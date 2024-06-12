@@ -2,10 +2,13 @@ package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.*;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
@@ -33,14 +36,13 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public Group getById(Integer id) throws GroupNotFoundException {
-        if(!groupRepository.existsById(id)) {
-            throw new GroupNotFoundException("Group not found");
-        }
-        return groupRepository.getReferenceById(id);
+        return groupRepository.findById(id)
+                .orElseThrow(() -> new GroupNotFoundException("Group not found"));
     }
 
     @Override
-    public Page<Group> getGroupList(Pageable pageable) {
+    public Page<Group> getGroupList(int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id"));
         return groupRepository.findAll(pageable);
     }
 
@@ -76,23 +78,24 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Group create(UserEntity owner, String name, String description) {
+    public Group create(GroupCreateRequestDto dto, UserEntity owner) {
         Group group = new Group();
         group.setOwner(owner);
         group.setCreateTime(new Date());
-        group.setName(name);
-        group.setDescription(description);
-        Group savedGroup = groupRepository.save(group);
+        group.setName(dto.getName());
+        group.setDescription(dto.getDescription());
+        groupRepository.save(group);
         try {
             subscribe(group, owner);
         }
         catch(GroupBlacklistedException ignored) {}
-        return savedGroup;
+        return group;
     }
 
     @Override
-    public Group update(Group group, UserEntity requester, GroupUpdateRequestDto newData)
-            throws GroupAdminAccessDeniedException, BadRequestException {
+    public Group update(Integer groupId, GroupUpdateRequestDto newData, UserEntity requester)
+            throws GroupAdminAccessDeniedException, BadRequestException, GroupNotFoundException {
+        Group group = getById(groupId);
         if(!checkOwner(group, requester)) {
             throw new GroupAdminAccessDeniedException("User is not an owner of the group");
         }
@@ -117,7 +120,8 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public void delete(Group group, UserEntity requester) throws GroupAdminAccessDeniedException {
+    public void delete(Integer groupId, UserEntity requester) throws GroupAdminAccessDeniedException, GroupNotFoundException {
+        Group group = getById(groupId);
         if(!checkOwner(group, requester)) {
             throw new GroupAdminAccessDeniedException("User is not an owner of the group");
         }

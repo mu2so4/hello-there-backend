@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
@@ -44,6 +45,9 @@ public class GroupServiceTests {
         owner.setId(userId);
         String name = "Test group";
         String description = "To mock or no to mock that is the question";
+        GroupCreateRequestDto dto = new GroupCreateRequestDto();
+        dto.setName(name);
+        dto.setDescription(description);
         when(userRepository.getReferenceById(userId)).thenReturn(owner);
         when(groupRepository.save(any(Group.class))).then((invocation) -> {
             Group savedGroup = invocation.getArgument(0, Group.class);
@@ -52,7 +56,7 @@ public class GroupServiceTests {
         });
         when(groupBlacklistRepository.existsById(any(GroupBlacklistId.class))).thenReturn(false);
 
-        Group savedGroup = groupService.create(userRepository.getReferenceById(userId), name, description);
+        Group savedGroup = groupService.create(dto, userRepository.getReferenceById(userId));
 
         Assertions.assertThat(savedGroup)
                 .isNotNull();

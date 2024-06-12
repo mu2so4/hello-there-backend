@@ -3,12 +3,15 @@ package ru.nsu.ccfit.muratov.hello.there.service.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.Post;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.exception.AccessDeniedException;
+import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.exception.ResourceNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.repository.PostRepository;
 import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
@@ -34,10 +37,13 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Page<Post> getGroupPosts(Group group, Pageable pageable, UserEntity requester) throws AccessDeniedException {
+    public Page<Post> getGroupPosts(Integer groupId, int pageNumber, int pageSize, UserEntity requester)
+            throws AccessDeniedException, GroupNotFoundException {
+        Group group = groupService.getById(groupId);
         if(groupService.isBlacklisted(group, requester)) {
             throw new AccessDeniedException("Cannot access group posts blocked a user");
         }
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createTime").descending());
         return postRepository.findByGroup(group, pageable);
     }
 
