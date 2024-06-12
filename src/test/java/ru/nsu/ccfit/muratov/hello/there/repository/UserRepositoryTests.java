@@ -1,6 +1,5 @@
 package ru.nsu.ccfit.muratov.hello.there.repository;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,7 +69,7 @@ public class UserRepositoryTests {
     public void getUser() {
         userRepository.save(user);
 
-        UserEntity dbUser = userRepository.getReferenceById(user.getId());
+        UserEntity dbUser = userRepository.findById(user.getId()).orElseThrow();
 
         Assertions.assertThat(dbUser)
                 .isNotNull()
@@ -83,7 +82,7 @@ public class UserRepositoryTests {
         userRepository.save(user);
         Integer id = user.getId();
 
-        var savedUser = userRepository.getReferenceById(id);
+        var savedUser = userRepository.findById(id).orElseThrow();
         String newFirstName = "Dmitry";
         String newLastName = "Udaltsov";
         savedUser.setFirstName(newFirstName);
@@ -105,8 +104,8 @@ public class UserRepositoryTests {
 
         userRepository.delete(user);
 
-        Assertions.assertThatThrownBy(() -> userRepository.getReferenceById(user.getId()))
-                .hasCauseInstanceOf(EntityNotFoundException.class);
+        org.junit.jupiter.api.Assertions.assertThrows(
+                NoSuchElementException.class, () -> userRepository.findById(user.getId()).orElseThrow());
     }
 
     @Test
