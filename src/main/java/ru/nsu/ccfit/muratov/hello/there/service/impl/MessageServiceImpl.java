@@ -3,10 +3,14 @@ package ru.nsu.ccfit.muratov.hello.there.service.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.message.MessageUpdateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Message;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.exception.*;
@@ -27,28 +31,29 @@ public class MessageServiceImpl implements MessageService {
     private long editExpiration;
 
     @Override
-    public Page<Message> getCorrespondence(UserEntity user1, UserEntity user2, Pageable pageable) {
-        return messageRepository.getCorrespondenceByUsers(user1, user2, pageable);
+    public Page<Message> getCorrespondence(UserEntity authUser, Integer anotherUserId, int pageNumber, int pageSize) throws UserNotFoundException {
+        UserEntity anotherUser = userEntityService.getById(anotherUserId);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("sendTime").descending());
+        return messageRepository.getCorrespondenceByUsers(authUser, anotherUser, pageable);
     }
 
     @Override
     public Message getById(Integer id) throws MessageNotFoundException {
-        if(!messageRepository.existsById(id)) {
-            throw new MessageNotFoundException("Message not found");
-        }
-        return messageRepository.getReferenceById(id);
+        return messageRepository.findById(id).orElseThrow(() ->
+            new MessageNotFoundException("Message not found"));
     }
 
     @Override
-    public Message sendMessage(UserEntity sender, UserEntity receiver, String content, Integer repliedMessageId)
-            throws UserBlacklistException, MessageNotFoundException {
+    public Message sendMessage(UserEntity sender, MessageRequestDto dto)
+            throws UserBlacklistException, MessageNotFoundException, UserNotFoundException {
+        UserEntity receiver = userEntityService.getById(dto.getReceiverId());
         if(userEntityService.isSomeoneBlacklistedEachOther(sender, receiver)) {
             throw new UserBlacklistException("Cannot send message to blocker or blocked");
         }
 
         Message message = new Message();
-        message.setRepliedMessage(getById(repliedMessageId));
-        message.setContent(content);
+        message.setRepliedMessage(getById(dto.getRepliedMessageId()));
+        message.setContent(dto.getContent());
         message.setSendTime(new Date());
         message.setSender(sender);
         message.setReceiver(receiver);
@@ -56,7 +61,9 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public Message edit(Message message, UserEntity requester, String newContent) throws AccessDeniedException {
+    public Message edit(Integer messageId, MessageUpdateRequestDto dto, UserEntity requester)
+            throws AccessDeniedException, MessageNotFoundException {
+        Message message = getById(messageId);
         if(!isMessageSender(message, requester)) {
             throw new MessageAccessFailedException("Cannot edit other's message");
         }
@@ -68,13 +75,14 @@ public class MessageServiceImpl implements MessageService {
             throw new MessageTimeoutExceededException("Edit timeout exceeded");
         }
 
-        message.setContent(newContent);
+        message.setContent(dto.getNewContent());
         message.setLastEditTime(editDate);
         return messageRepository.save(message);
     }
 
     @Override
-    public void delete(Message message, UserEntity requester) throws AccessDeniedException {
+    public void delete(Integer messageId, UserEntity requester) throws AccessDeniedException, MessageNotFoundException {
+        Message message = getById(messageId);
         if(!isMessageSender(message, requester)) {
             throw new MessageAccessFailedException("Cannot delete other's message");
         }
