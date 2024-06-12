@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.RegistrationRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.user.UserBlacklistRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserBlacklist;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
@@ -13,10 +14,10 @@ public interface UserEntityService {
     UserEntity registerUser(RegistrationRequestDto form);
 
     UserEntity getUserByUserDetails(UserDetails userDetails);
-    UserEntity getById(Integer id) throws UserNotFoundException;
+    UserEntity getById(Integer userId) throws UserNotFoundException;
 
-    void addToBlacklist(UserEntity blocker, UserEntity blocked) throws BadRequestException;
-    void removeFromBlacklist(UserEntity blocker, UserEntity blocked);
+    UserBlacklist addToBlacklist(UserEntity blocker, UserBlacklistRequestDto dto) throws BadRequestException, UserNotFoundException;
+    void removeFromBlacklist(UserEntity blocker, Integer userId) throws UserNotFoundException;
     Page<UserBlacklist> getBlacklist(UserEntity blocker, Pageable pageable);
 
     boolean isBlacklistedByUser(UserEntity blocker, UserEntity blocked);
