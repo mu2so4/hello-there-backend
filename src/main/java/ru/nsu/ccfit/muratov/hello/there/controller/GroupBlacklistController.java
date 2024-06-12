@@ -7,16 +7,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.group.GroupBlacklistDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.group.GroupBlacklistRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupAdminAccessDeniedException;
@@ -44,73 +40,32 @@ public class GroupBlacklistController {
                     "Only the owner can access the blacklist."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Success"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Cannot access group's blacklist",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Group not found",
-                    content = @Content
-            )
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Cannot access group's blacklist", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Group not found", content = @Content)
     })
     @GetMapping(produces = "application/json")
     public List<GroupBlacklistDto> getBlacklist(@PathVariable int groupId,
                                                        @RequestParam(defaultValue = "0", name = "page") int pageNumber,
                                                        @AuthenticationPrincipal UserDetails userDetails) throws ResourceNotFoundException, GroupAdminAccessDeniedException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupService.getById(groupId);
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id"));
-        return groupService.getBlacklist(group, requester, pageable).stream()
+        return groupService.getBlacklist(groupId, pageNumber, pageSize, requester).stream()
                 .map(GroupBlacklistDto::new)
                 .toList();
     }
 
-    @Operation(
-            summary = "Add user to user's blacklist",
+    @Operation(summary = "Add user to user's blacklist",
             description = "Adds user to user's blacklist by their ID. " +
                     "Only the group's owner can perform this action."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Success"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Cannot access group's blacklist",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "User or group not found",
-                    content = @Content
-            )
+            @ApiResponse(responseCode = "201", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Cannot access group's blacklist", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User or group not found", content = @Content)
     })
     @PostMapping(consumes = "application/json", produces = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
@@ -119,41 +74,19 @@ public class GroupBlacklistController {
                                             @AuthenticationPrincipal UserDetails userDetails)
             throws ResourceNotFoundException, BadRequestException, GroupAdminAccessDeniedException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupService.getById(groupId);
-        UserEntity blocked = userEntityService.getById(dto.getUserId());
-        return new GroupBlacklistDto(groupService.addToBlacklist(group, blocked, dto.getReason(), requester));
+        return new GroupBlacklistDto(groupService.addToBlacklist(groupId, dto, requester));
     }
 
-    @Operation(
-            summary = "Remove user from group's blacklist",
+    @Operation(summary = "Remove user from group's blacklist",
             description = "Removes user from group's blacklist by their ID. " +
                     "Only the group's owner can perform this action."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "Success"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Cannot access group's blacklist",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "User or group not found",
-                    content = @Content
-            )
+            @ApiResponse(responseCode = "204", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Cannot access group's blacklist", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User or group not found", content = @Content)
     })
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -162,8 +95,6 @@ public class GroupBlacklistController {
                                     @AuthenticationPrincipal UserDetails userDetails)
             throws GroupAdminAccessDeniedException, ResourceNotFoundException {
         UserEntity requester = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupService.getById(groupId);
-        UserEntity blocked = userEntityService.getById(blockedId);
-        groupService.removeFromBlacklist(group, blocked, requester);
+        groupService.removeFromBlacklist(groupId, blockedId, requester);
     }
 }

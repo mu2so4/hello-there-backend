@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.muratov.hello.there.dto.auth.RegistrationRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.blacklist.user.UserBlacklistRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserBlacklist;
 import ru.nsu.ccfit.muratov.hello.there.entity.id.UserBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
@@ -53,15 +54,15 @@ public class UserEntityServiceImpl implements UserEntityService {
     }
 
     @Override
-    public UserEntity getById(Integer id) throws UserNotFoundException {
-        if(!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User not found");
-        }
-        return userRepository.getReferenceById(id);
+    public UserEntity getById(Integer userId) throws UserNotFoundException {
+        return userRepository.findById(userId).orElseThrow(() ->
+                new UserNotFoundException("User not found")
+        );
     }
 
     @Override
-    public void addToBlacklist(UserEntity blocker, UserEntity blocked) throws BadRequestException {
+    public UserBlacklist addToBlacklist(UserEntity blocker, UserBlacklistRequestDto dto) throws BadRequestException, UserNotFoundException {
+        UserEntity blocked = getById(dto.getId());
         if(blocker.equals(blocked)) {
             throw new BadRequestException("Cannot add themselves to blacklist");
         }
@@ -69,11 +70,12 @@ public class UserEntityServiceImpl implements UserEntityService {
         userBlacklist.setId(new UserBlacklistId(blocker.getId(), blocked.getId()));
         userBlacklist.setBlocker(blocker);
         userBlacklist.setBlocked(blocked);
-        userBlacklistRepository.save(userBlacklist);
+        return userBlacklistRepository.save(userBlacklist);
     }
 
     @Override
-    public void removeFromBlacklist(UserEntity blocker, UserEntity blocked) {
+    public void removeFromBlacklist(UserEntity blocker, Integer blockedId) throws UserNotFoundException {
+        UserEntity blocked = getById(blockedId);
         userBlacklistRepository.deleteById(new UserBlacklistId(blocker.getId(), blocked.getId()));
         userRepository.save(blocker);
     }
