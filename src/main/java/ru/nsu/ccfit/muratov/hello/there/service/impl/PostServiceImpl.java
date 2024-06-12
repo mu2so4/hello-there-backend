@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.nsu.ccfit.muratov.hello.there.dto.post.PostEditRequestDto;
+import ru.nsu.ccfit.muratov.hello.there.dto.post.PostRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.Post;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
@@ -30,10 +32,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Post findById(Integer id) throws ResourceNotFoundException {
-        if(!postRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Post not found");
-        }
-        return postRepository.getReferenceById(id);
+        return postRepository.findById(id).orElseThrow(() ->
+            new ResourceNotFoundException("Post not found"));
     }
 
     @Override
@@ -48,12 +48,13 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Post create(Group group, String content, UserEntity requester) throws AccessDeniedException {
+    public Post create(PostRequestDto dto, UserEntity requester) throws AccessDeniedException, GroupNotFoundException {
+        Group group = groupService.getById(dto.getGroupId());
         if(!groupService.checkOwner(group, requester)) {
             throw new AccessDeniedException("Only the group owner can post");
         }
         Post post = new Post();
-        post.setContent(content);
+        post.setContent(dto.getContent());
         post.setGroup(group);
         post.setCreateTime(new Date());
         return postRepository.save(post);
@@ -69,7 +70,8 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Post update(Post post, String newContent, UserEntity requester) throws AccessDeniedException {
+    public Post update(Integer postId, PostEditRequestDto dto, UserEntity requester) throws AccessDeniedException, ResourceNotFoundException {
+        Post post = findById(postId);
         Group group = post.getGroup();
         if(!groupService.checkOwner(group, requester)) {
             throw new AccessDeniedException("Only the group owner can edit post");
@@ -78,13 +80,14 @@ public class PostServiceImpl implements PostService {
         if(editTime.getTime() - post.getCreateTime().getTime() > expiration) {
             throw new AccessDeniedException("Post edit time limit expired");
         }
-        post.setContent(newContent);
+        post.setContent(dto.getNewContent());
         post.setLastEditTime(editTime);
         return postRepository.save(post);
     }
 
     @Override
-    public void delete(Post post, UserEntity requester) throws AccessDeniedException {
+    public void delete(Integer postId, UserEntity requester) throws AccessDeniedException, ResourceNotFoundException {
+        Post post = findById(postId);
         Group group = post.getGroup();
         if(!groupService.checkOwner(group, requester)) {
             throw new AccessDeniedException("Only the group owner can delete post");
