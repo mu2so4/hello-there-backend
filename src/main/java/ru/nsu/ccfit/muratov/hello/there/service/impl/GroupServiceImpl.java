@@ -31,9 +31,9 @@ public class GroupServiceImpl implements GroupService {
     @Autowired
     private GroupBlacklistRepository groupBlacklistRepository;
     @Autowired
-    private SubscriptionRepository subscriptionRepository;
-    @Autowired
     private UserEntityService userService;
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     @Override
     public Group getById(Integer id) throws GroupNotFoundException {
@@ -48,37 +48,6 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Subscription subscribe(Group group, UserEntity user) throws GroupBlacklistedException {
-        if(isBlacklisted(group, user)) {
-            throw new GroupBlacklistedException("Cannot subscribe to group blocked the user");
-        }
-        SubscriptionId subscriptionId = new SubscriptionId(group.getId(), user.getId());
-        Subscription subscription = new Subscription();
-        subscription.setGroup(group);
-        subscription.setSubscriber(user);
-        subscription.setSubscriptionTime(new Date());
-        subscription.setId(subscriptionId);
-        return subscriptionRepository.save(subscription);
-    }
-
-    @Override
-    public void unsubscribe(Group group, UserEntity user) throws BadRequestException {
-        if(user.equals(group.getOwner())) {
-            throw new BadRequestException("Group owner cannot unsubscribe from their group");
-        }
-        subscriptionRepository.deleteById(new SubscriptionId(group.getId(), user.getId()));
-    }
-
-    @Override
-    public List<Subscription> getSubscriberList(Group group, UserEntity requester, Pageable pageable)
-            throws GroupBlacklistedException {
-        if(isBlacklisted(group, requester)) {
-            throw new GroupBlacklistedException("Cannot subscribe to group blocked the user");
-        }
-        return subscriptionRepository.findByGroup(group, pageable);
-    }
-
-    @Override
     public Group create(GroupCreateRequestDto dto, UserEntity owner) {
         Group group = new Group();
         group.setOwner(owner);
@@ -86,10 +55,7 @@ public class GroupServiceImpl implements GroupService {
         group.setName(dto.getName());
         group.setDescription(dto.getDescription());
         groupRepository.save(group);
-        try {
-            subscribe(group, owner);
-        }
-        catch(GroupBlacklistedException ignored) {}
+        subscribeInternal(group, owner);
         return group;
     }
 
@@ -130,6 +96,36 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
     }
 
+
+
+    @Override
+    public Subscription subscribe(Integer groupId, UserEntity user) throws GroupBlacklistedException, GroupNotFoundException {
+        Group group = getById(groupId);
+        if(isBlacklisted(group, user)) {
+            throw new GroupBlacklistedException("Cannot subscribe to group blocked the user");
+        }
+        return subscribeInternal(group, user);
+    }
+
+    @Override
+    public void unsubscribe(Integer groupId, UserEntity user) throws BadRequestException, GroupNotFoundException {
+        Group group = getById(groupId);
+        if(user.equals(group.getOwner())) {
+            throw new BadRequestException("Group owner cannot unsubscribe from their group");
+        }
+        unsubscribeInternal(group, user);
+    }
+
+    @Override
+    public List<Subscription> getSubscriberList(Integer groupId, Pageable pageable, UserEntity requester)
+            throws GroupBlacklistedException, GroupNotFoundException {
+        Group group = getById(groupId);
+        if(isBlacklisted(group, requester)) {
+            throw new GroupBlacklistedException("Cannot subscribe to group blocked the user");
+        }
+        return subscriptionRepository.findByGroup(group, pageable);
+    }
+
     @Override
     public GroupBlacklist addToBlacklist(Integer groupId, GroupBlacklistRequestDto dto, UserEntity requester)
             throws GroupAdminAccessDeniedException, BadRequestException, ResourceNotFoundException {
@@ -141,7 +137,7 @@ public class GroupServiceImpl implements GroupService {
         if(requester.equals(blocked)) {
             throw new BadRequestException("Attempt to add themselves to blacklist");
         }
-        unsubscribe(group, blocked);
+        unsubscribeInternal(group, blocked);
         GroupBlacklistId groupBlacklistId = new GroupBlacklistId(group.getId(), blocked.getId());
         GroupBlacklist groupBlacklist = new GroupBlacklist();
         groupBlacklist.setId(groupBlacklistId);
@@ -181,5 +177,21 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public boolean checkOwner(Group group, UserEntity requester) {
         return requester.equals(group.getOwner());
+    }
+
+
+
+    private Subscription subscribeInternal(Group group, UserEntity user) {
+        SubscriptionId subscriptionId = new SubscriptionId(group.getId(), user.getId());
+        Subscription subscription = new Subscription();
+        subscription.setGroup(group);
+        subscription.setSubscriber(user);
+        subscription.setSubscriptionTime(new Date());
+        subscription.setId(subscriptionId);
+        return subscriptionRepository.save(subscription);
+    }
+
+    private void unsubscribeInternal(Group group, UserEntity user) {
+        subscriptionRepository.deleteById(new SubscriptionId(group.getId(), user.getId()));
     }
 }

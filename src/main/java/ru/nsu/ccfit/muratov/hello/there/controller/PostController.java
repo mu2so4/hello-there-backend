@@ -13,13 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import ru.nsu.ccfit.muratov.hello.there.dto.post.PostDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.post.PostEditRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.dto.post.PostRequestDto;
-import ru.nsu.ccfit.muratov.hello.there.entity.Group;
-import ru.nsu.ccfit.muratov.hello.there.entity.Post;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.exception.AccessDeniedException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupNotFoundException;
 import ru.nsu.ccfit.muratov.hello.there.exception.ResourceNotFoundException;
-import ru.nsu.ccfit.muratov.hello.there.service.GroupService;
 import ru.nsu.ccfit.muratov.hello.there.service.PostService;
 import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
@@ -29,8 +26,6 @@ import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 public class PostController {
     @Autowired
     private PostService postService;
-    @Autowired
-    private GroupService groupService;
     @Autowired
     private UserEntityService userService;
 

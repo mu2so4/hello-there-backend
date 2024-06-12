@@ -18,13 +18,13 @@ public interface GroupService {
 
     Page<Group> getGroupList(int pageNumber, int pageSize);
 
-    Subscription subscribe(Group group, UserEntity user) throws GroupBlacklistedException;
-    void unsubscribe(Group group, UserEntity user) throws BadRequestException;
-    List<Subscription> getSubscriberList(Group group, UserEntity requester, Pageable pageable) throws GroupBlacklistedException;
-
     Group create(GroupCreateRequestDto dto, UserEntity requester);
     Group update(Integer groupId, GroupUpdateRequestDto newData, UserEntity requester) throws GroupAdminAccessDeniedException, BadRequestException, GroupNotFoundException;
     void delete(Integer groupId, UserEntity requester) throws GroupAdminAccessDeniedException, GroupNotFoundException;
+
+    Subscription subscribe(Integer groupId, UserEntity user) throws GroupBlacklistedException, GroupNotFoundException;
+    void unsubscribe(Integer groupId, UserEntity user) throws BadRequestException, GroupNotFoundException;
+    List<Subscription> getSubscriberList(Integer groupId, Pageable pageable, UserEntity requester) throws GroupBlacklistedException, GroupNotFoundException;
 
     GroupBlacklist addToBlacklist(Integer groupId, GroupBlacklistRequestDto dto, UserEntity requester) throws GroupAdminAccessDeniedException, BadRequestException, ResourceNotFoundException;
     void removeFromBlacklist(Integer groupId, Integer blockedId, UserEntity requester) throws GroupAdminAccessDeniedException, ResourceNotFoundException;

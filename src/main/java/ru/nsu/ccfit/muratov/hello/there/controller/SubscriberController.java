@@ -15,7 +15,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.ccfit.muratov.hello.there.dto.SubscriptionDto;
-import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
 import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.GroupBlacklistedException;
@@ -32,41 +31,21 @@ public class SubscriberController {
     @Autowired
     private UserEntityService userEntityService;
     @Autowired
-    private GroupService groupService;
+    private GroupService subscriptionService;
 
     @Value("${data.groups.subscribers.page.size}")
     private int pageSize;
 
-    @Operation(
-            summary = "Retrieve group's subscriber list",
+    @Operation(summary = "Retrieve group's subscriber list",
             description = "Retrieves group's subscriber list. The list is ordered by user IDs. " +
                     "A user cannot access the list if they are blocked by the group."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Success"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access denied for blacklisted user",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Group not found",
-                    content = @Content
-            )
+            @ApiResponse(responseCode = "200", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Access denied for blacklisted user", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Group not found", content = @Content)
     })
     @GetMapping(produces = "application/json")
     public List<SubscriptionDto> getSubscribers(@PathVariable int groupId,
@@ -74,44 +53,24 @@ public class SubscriberController {
                                                 @AuthenticationPrincipal UserDetails userDetails)
             throws GroupNotFoundException, GroupBlacklistedException {
         UserEntity user = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupService.getById(groupId);
+
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("subscriptionTime"));
-        return groupService.getSubscriberList(group, user, pageable).stream()
+        return subscriptionService.getSubscriberList(groupId, pageable, user).stream()
                 .map(SubscriptionDto::new)
                 .toList();
     }
 
 
-    @Operation(
-            summary = "Subscribe on a group",
+    @Operation(summary = "Subscribe on a group",
             description = "Subscribes on a group. " +
                     "A user cannot subscribe if they are blocked by the group."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Success"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access denied for blacklisted user",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Group not found",
-                    content = @Content
-            )
+            @ApiResponse(responseCode = "201", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Access denied for blacklisted user", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Group not found", content = @Content)
     })
     @PostMapping(produces = "application/json")
     @ResponseStatus(code = HttpStatus.CREATED)
@@ -119,35 +78,18 @@ public class SubscriberController {
                                      @AuthenticationPrincipal UserDetails userDetails)
             throws GroupBlacklistedException, GroupNotFoundException {
         UserEntity user = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupService.getById(groupId);
-        return new SubscriptionDto(groupService.subscribe(group, user));
+        return new SubscriptionDto(subscriptionService.subscribe(groupId, user));
     }
 
-    @Operation(
-            summary = "Unsubscribe from a group",
+    @Operation(summary = "Unsubscribe from a group",
             description = "Unsubscribes from a group. " +
                     "A user cannot subscribe if they are the group's owner."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "Success"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Group not found",
-                    content = @Content
-            )
+            @ApiResponse(responseCode = "204", description = "Success"),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Group not found", content = @Content)
     })
     @DeleteMapping
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
@@ -155,7 +97,6 @@ public class SubscriberController {
                             @AuthenticationPrincipal UserDetails userDetails)
             throws GroupNotFoundException, BadRequestException {
         UserEntity user = userEntityService.getUserByUserDetails(userDetails);
-        Group group = groupService.getById(groupId);
-        groupService.unsubscribe(group, user);
+        subscriptionService.unsubscribe(groupId, user);
     }
 }
