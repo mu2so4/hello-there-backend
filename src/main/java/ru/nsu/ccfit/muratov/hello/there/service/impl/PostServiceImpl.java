@@ -1,6 +1,5 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,12 +22,15 @@ import java.util.Date;
 
 @Service
 public class PostServiceImpl implements PostService {
-    @Autowired
-    private PostRepository postRepository;
-    @Autowired
-    private GroupService groupService;
+    private final PostRepository postRepository;
+    private final GroupService groupService;
     @Value("${data.group.post.expiration}")
     private long expiration;
+
+    public PostServiceImpl(PostRepository postRepository, GroupService groupService) {
+        this.postRepository = postRepository;
+        this.groupService = groupService;
+    }
 
     @Override
     public Post findById(Integer id) throws ResourceNotFoundException {

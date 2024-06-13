@@ -1,6 +1,5 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,13 +21,16 @@ import java.util.Date;
 
 @Service
 public class MessageServiceImpl implements MessageService {
-    @Autowired
-    private MessageRepository messageRepository;
-    @Autowired
-    private UserEntityService userEntityService;
+    private final MessageRepository messageRepository;
+    private final UserEntityService userEntityService;
 
     @Value("${data.message.edit.expiration}")
     private long editExpiration;
+
+    public MessageServiceImpl(MessageRepository messageRepository, UserEntityService userEntityService) {
+        this.messageRepository = messageRepository;
+        this.userEntityService = userEntityService;
+    }
 
     @Override
     public Page<Message> getCorrespondence(UserEntity authUser, Integer anotherUserId, int pageNumber, int pageSize) throws UserNotFoundException {

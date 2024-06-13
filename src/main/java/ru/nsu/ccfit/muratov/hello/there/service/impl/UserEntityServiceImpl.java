@@ -1,6 +1,5 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,16 +23,19 @@ import java.util.Date;
 
 @Service
 public class UserEntityServiceImpl implements UserEntityService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserBlacklistRepository userBlacklistRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final UserBlacklistRepository userBlacklistRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private static final String USER_ROLE_NAME = "USER";
+
+    public UserEntityServiceImpl(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.userBlacklistRepository = userBlacklistRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public UserEntity registerUser(RegistrationRequestDto form) {
