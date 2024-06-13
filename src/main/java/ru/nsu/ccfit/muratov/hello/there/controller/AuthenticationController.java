@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.security.JwtAuthFilter;
 import ru.nsu.ccfit.muratov.hello.there.security.TokenBlacklist;
 import ru.nsu.ccfit.muratov.hello.there.service.JwtService;
@@ -45,7 +46,7 @@ public class AuthenticationController {
     })
     @PostMapping(value = "/register", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
-    public RegistrationResponseDto registerNewUser(@RequestBody RegistrationRequestDto form) {
+    public RegistrationResponseDto registerNewUser(@RequestBody RegistrationRequestDto form) throws BadRequestException {
         return new RegistrationResponseDto(userEntityService.registerUser(form));
     }
 

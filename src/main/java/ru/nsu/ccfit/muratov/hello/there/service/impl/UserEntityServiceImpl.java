@@ -20,6 +20,7 @@ import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 @Service
 public class UserEntityServiceImpl implements UserEntityService {
@@ -29,6 +30,8 @@ public class UserEntityServiceImpl implements UserEntityService {
     private final PasswordEncoder passwordEncoder;
 
     private static final String USER_ROLE_NAME = "USER";
+    private static final int MIN_USERNAME_LENGTH = 5;
+    private static final int MAX_USERNAME_LENGTH = 20;
 
     public UserEntityServiceImpl(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -38,9 +41,12 @@ public class UserEntityServiceImpl implements UserEntityService {
     }
 
     @Override
-    public UserEntity registerUser(RegistrationRequestDto form) {
+    public UserEntity registerUser(RegistrationRequestDto form) throws BadRequestException {
+        String username = form.getUsername();
+        validateUsername(username);
+
         UserEntity user = new UserEntity();
-        user.setUsername(form.getUsername());
+        user.setUsername(username);
         setPassword(user, form.getPassword());
         user.setFirstName(form.getFirstName());
         user.setLastName(form.getLastName());
@@ -99,5 +105,20 @@ public class UserEntityServiceImpl implements UserEntityService {
 
     private void setPassword(UserEntity user, String password) {
         user.setPassword(passwordEncoder.encode(password));
+    }
+
+    private void validateUsername(String username) throws BadRequestException {
+        if(username == null) {
+            throw new BadRequestException("Username not set");
+        }
+        if(!Pattern.matches("[A-Za-z0-9_]*", username)) {
+            throw new BadRequestException("Illegal symbols in username");
+        }
+        if(username.length() > MAX_USERNAME_LENGTH) {
+            throw new BadRequestException("Username too long");
+        }
+        if(username.length() < MIN_USERNAME_LENGTH) {
+            throw new BadRequestException("Username too short");
+        }
     }
 }
