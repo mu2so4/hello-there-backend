@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
@@ -27,15 +26,17 @@ import java.util.logging.Logger;
 @RequestMapping(value = "/api/auth")
 @Tag(name = "Authentication")
 public class AuthenticationController {
-    @Autowired
-    private JwtService jwtService;
-    @Autowired
-    private TokenBlacklist tokenBlacklist;
-
-    @Autowired
-    private UserEntityService userEntityService;
+    private final JwtService jwtService;
+    private final TokenBlacklist tokenBlacklist;
+    private final UserEntityService userEntityService;
 
     private static final Logger logger = Logger.getLogger(AuthenticationController.class.getCanonicalName());
+
+    public AuthenticationController(JwtService jwtService, TokenBlacklist tokenBlacklist, UserEntityService userEntityService) {
+        this.jwtService = jwtService;
+        this.tokenBlacklist = tokenBlacklist;
+        this.userEntityService = userEntityService;
+    }
 
     @Operation(summary = "Register a new user",
             description = "Registers a new user in the system."
