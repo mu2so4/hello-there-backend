@@ -143,6 +143,20 @@ public class UserRepositoryTests {
     }
 
     @Test
+    @DisplayName("Exists by username")
+    public void existsByUsername() {
+        String fakeUsername = "mur";
+        userRepository.save(user);
+        Assertions.assertThat(fakeUsername).isNotEqualTo(user.getUsername());
+
+        boolean exists = userRepository.existsByUsername(user.getUsername());
+        boolean existsFake = userRepository.existsByUsername(fakeUsername);
+
+        Assertions.assertThat(exists).isTrue();
+        Assertions.assertThat(existsFake).isFalse();
+    }
+
+    @Test
     @DisplayName("Duplicate username")
     public void duplicateUsername() throws ParseException {
         UserEntity user1 = createTestUser();

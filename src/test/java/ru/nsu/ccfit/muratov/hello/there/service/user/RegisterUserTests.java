@@ -49,14 +49,7 @@ public class RegisterUserTests {
         role = new Role(1, ROLE_NAME);
         userId = 1234;
 
-        dto = new RegistrationRequestDto();
-        dto.setUsername("mu2so4");
-        dto.setPassword("1234");
-        dto.setFirstName("Maxim");
-        dto.setLastName("Muratov");
-        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
-        Date date = parser.parse("2002-01-01");
-        dto.setBirthday(date);
+        dto = createRegistrationRequest();
     }
 
     @Test
@@ -166,5 +159,32 @@ public class RegisterUserTests {
                     .hasMessage("Illegal symbols in username");
         }
 
+
+        @Test
+        @DisplayName("Create with username that was taken")
+        public void createWithTakenUsername() throws BadRequestException, ParseException {
+            String takenUsername = "Mu2SO4";
+            dto.setUsername(takenUsername);
+            userService.registerUser(dto);
+            RegistrationRequestDto nextDto = createRegistrationRequest();
+            when(userRepository.existsByUsername(any(String.class))).thenReturn(true);
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(nextDto));
+            Assertions.assertThat(e)
+                    .hasMessage("Username is already taken");
+        }
+    }
+
+    private static RegistrationRequestDto createRegistrationRequest() throws ParseException {
+        RegistrationRequestDto dto = new RegistrationRequestDto();
+        dto.setUsername("mu2so4");
+        dto.setPassword("1234");
+        dto.setFirstName("Maxim");
+        dto.setLastName("Muratov");
+        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = parser.parse("2002-01-01");
+        dto.setBirthday(date);
+        return dto;
     }
 }

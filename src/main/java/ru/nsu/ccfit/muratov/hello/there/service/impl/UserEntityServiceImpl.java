@@ -120,5 +120,8 @@ public class UserEntityServiceImpl implements UserEntityService {
         if(username.length() < MIN_USERNAME_LENGTH) {
             throw new BadRequestException("Username too short");
         }
+        if(userRepository.existsByUsername(username)) {
+            throw new BadRequestException("Username is already taken");
+        }
     }
 }
