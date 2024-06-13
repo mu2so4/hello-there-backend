@@ -4,9 +4,11 @@ import org.assertj.core.api.Assertions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -142,18 +144,35 @@ public class UserRepositoryTests {
         Assertions.assertThat(noUser.isPresent()).isFalse();
     }
 
-    @Test
-    @DisplayName("Exists by username")
-    public void existsByUsername() {
-        String fakeUsername = "mur";
-        userRepository.save(user);
-        Assertions.assertThat(fakeUsername).isNotEqualTo(user.getUsername());
+    @Nested
+    class ExistsByUsernameTest {
+        @Test
+        @DisplayName("Exists by username")
+        public void existsByUsername() {
+            String fakeUsername = "mur";
+            userRepository.save(user);
+            Assertions.assertThat(fakeUsername).isNotEqualTo(user.getUsername());
 
-        boolean exists = userRepository.existsByUsername(user.getUsername());
-        boolean existsFake = userRepository.existsByUsername(fakeUsername);
+            boolean exists = userRepository.existsByUsernameIgnoreCase(user.getUsername());
+            boolean existsFake = userRepository.existsByUsernameIgnoreCase(fakeUsername);
 
-        Assertions.assertThat(exists).isTrue();
-        Assertions.assertThat(existsFake).isFalse();
+            Assertions.assertThat(exists).isTrue();
+            Assertions.assertThat(existsFake).isFalse();
+        }
+
+
+        @ParameterizedTest
+        @ValueSource(strings = {"mu2so4", "MU2SO4"})
+        @DisplayName("Exists by username case insensitive")
+        public void existsByUsernameCaseInsensitive(String username) {
+            String takenUsername = "Mu2SO4";
+            user.setUsername(takenUsername);
+            userRepository.save(user);
+
+            boolean exists = userRepository.existsByUsernameIgnoreCase(username);
+
+            Assertions.assertThat(exists).isTrue();
+        }
     }
 
     @Test

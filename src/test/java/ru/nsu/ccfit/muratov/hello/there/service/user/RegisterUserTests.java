@@ -167,7 +167,7 @@ public class RegisterUserTests {
             dto.setUsername(takenUsername);
             userService.registerUser(dto);
             RegistrationRequestDto nextDto = createRegistrationRequest();
-            when(userRepository.existsByUsername(any(String.class))).thenReturn(true);
+            when(userRepository.existsByUsernameIgnoreCase(any(String.class))).thenReturn(true);
 
             BadRequestException e =
                     org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(nextDto));
