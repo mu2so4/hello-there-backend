@@ -20,6 +20,7 @@ import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 @Service
@@ -32,6 +33,7 @@ public class UserEntityServiceImpl implements UserEntityService {
     private static final String USER_ROLE_NAME = "USER";
     private static final int MIN_USERNAME_LENGTH = 5;
     private static final int MAX_USERNAME_LENGTH = 20;
+    private static final int MIN_PASSWORD_LENGTH = 10;
 
     public UserEntityServiceImpl(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -47,11 +49,11 @@ public class UserEntityServiceImpl implements UserEntityService {
 
         UserEntity user = new UserEntity();
         user.setUsername(username);
-        setPassword(user, form.getPassword());
         user.setFirstName(form.getFirstName());
         user.setLastName(form.getLastName());
         user.setRegistrationTime(new Date());
         user.setBirthday(form.getBirthday());
+        setPassword(user, form.getPassword());
         user.setRoles(Collections.singleton(roleRepository.findByName(USER_ROLE_NAME))); //fixme to mutable set
         return userRepository.save(user);
     }
@@ -103,7 +105,19 @@ public class UserEntityServiceImpl implements UserEntityService {
         return isBlacklistedByUser(user1, user2) || isBlacklistedByUser(user2, user1);
     }
 
-    private void setPassword(UserEntity user, String password) {
+    private void setPassword(UserEntity user, String password) throws BadRequestException {
+        if(password == null) {
+            throw new BadRequestException("Password not set");
+        }
+        if(password.length() < MIN_PASSWORD_LENGTH) {
+            throw new BadRequestException("Password is too short");
+        }
+        String passwordLowerCase = password.toLowerCase(Locale.ROOT);
+        if(passwordLowerCase.contains(user.getUsername().toLowerCase(Locale.ROOT)) ||
+                passwordLowerCase.contains(user.getFirstName().toLowerCase(Locale.ROOT)) ||
+                passwordLowerCase.contains(user.getLastName().toLowerCase(Locale.ROOT))) {
+            throw new BadRequestException("Password must not contain user data");
+        }
         user.setPassword(passwordEncoder.encode(password));
     }
 

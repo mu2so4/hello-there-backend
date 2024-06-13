@@ -176,10 +176,105 @@ public class RegisterUserTests {
         }
     }
 
+    @Nested
+    @DisplayName("Password parameter test")
+    public class PasswordTest {
+        //meaning of the emoji password: "It's over, Anakin! I have the high ground!"
+        @ParameterizedTest
+        @ValueSource(strings = {"veryDifficultPassword", "Невероятно сложный пароль", "Passw0RD.?", "🌐🛑🥷🤗⬆️🌋"})
+        @DisplayName("Create with valid password")
+        public void createWithValidPassword(String password) {
+            dto.setPassword(password);
+
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+        }
+
+        @Test
+        @DisplayName("Create with null password")
+        public void createWithNullPassword() {
+            dto.setPassword(null);
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Password not set");
+        }
+
+        @Test
+        @DisplayName("Create with too short password")
+        public void createWithTooShortPassword() {
+            dto.setPassword("1234");
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Password is too short");
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = {9, 10, 11})
+        @DisplayName("Create with password with different lengths")
+        public void createWithPasswordWithDiffLengths(int passwordLength) {
+            final int MIN_PASSWORD_LENGTH = 10;
+            String password = "A".repeat(passwordLength);
+            dto.setPassword(password);
+
+            if(passwordLength >= MIN_PASSWORD_LENGTH) {
+                org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+            }
+            else {
+                BadRequestException e =
+                        org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+                Assertions.assertThat(e)
+                        .hasMessage("Password is too short");
+            }
+        }
+
+        /*
+        @ParameterizedTest
+        @ValueSource(strings = {"qwertyuiop", "1234567890", "PoIuYtReWq", "AAAAAAAAAAAAAAA", "abcdefghij"})
+        @DisplayName("Create with too weak password")
+        public void createWithTooWeakPassword(String password) {
+            dto.setPassword(password);
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Password is too weak");
+        }
+        */
+
+        @ParameterizedTest
+        @ValueSource(strings = {"000mu2so4000", "maximus1234", "Chel2Muratov"})
+        @DisplayName("Create password containing user data")
+        public void createWithPasswordContainingUserData(String password) {
+            dto.setPassword(password);
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Password must not contain user data");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"Максимус1234", "Chel2Муратов"})
+        @DisplayName("Create password containing user data in cyrillic")
+        public void createWithPasswordContainingUserDataCyrillic(String password) {
+            dto.setPassword(password);
+            dto.setFirstName("Максим");
+            dto.setLastName("Муратов");
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Password must not contain user data");
+        }
+    }
+
     private static RegistrationRequestDto createRegistrationRequest() throws ParseException {
         RegistrationRequestDto dto = new RegistrationRequestDto();
         dto.setUsername("mu2so4");
-        dto.setPassword("1234");
+        dto.setPassword("veryDifficultPassword");
         dto.setFirstName("Maxim");
         dto.setLastName("Muratov");
         SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
