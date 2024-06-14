@@ -25,6 +25,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -94,7 +96,7 @@ public class RegisterUserTests {
             });
             when(roleRepository.findByName("USER")).thenReturn(role);
 
-            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+            assertDoesNotThrow(() -> userService.registerUser(dto));
         }
 
         @ParameterizedTest
@@ -108,9 +110,9 @@ public class RegisterUserTests {
             boolean isValidLength = (usernameLength >= MIN_USERNAME_LENGTH) && (usernameLength <= MAX_USERNAME_LENGTH);
 
             if (isValidLength) {
-                org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+                assertDoesNotThrow(() -> userService.registerUser(dto));
             } else {
-                org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+                assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
             }
         }
 
@@ -119,10 +121,8 @@ public class RegisterUserTests {
         public void createWithNull() {
             dto.setUsername(null);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Username not set");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Username not set");
         }
 
         @Test
@@ -130,10 +130,8 @@ public class RegisterUserTests {
         public void createWithTooLong() {
             dto.setUsername("A".repeat(25));
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Username too long");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Username too long");
         }
 
         @Test
@@ -141,10 +139,8 @@ public class RegisterUserTests {
         public void createWithTooShort() {
             dto.setUsername("A");
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Username too short");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Username too short");
         }
 
         @ParameterizedTest
@@ -153,10 +149,8 @@ public class RegisterUserTests {
         public void createWithIllegalSymbols(String username) {
             dto.setUsername(username);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Illegal symbols in username");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Illegal symbols in username");
         }
 
 
@@ -169,10 +163,8 @@ public class RegisterUserTests {
             RegistrationRequestDto nextDto = createRegistrationRequest();
             when(userRepository.existsByUsernameIgnoreCase(any(String.class))).thenReturn(true);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(nextDto));
-            Assertions.assertThat(e)
-                    .hasMessage("Username is already taken");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(nextDto));
+            Assertions.assertThat(e).hasMessage("Username is already taken");
         }
     }
 
@@ -186,7 +178,7 @@ public class RegisterUserTests {
         public void createWithValidValue(String password) {
             dto.setPassword(password);
 
-            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+            assertDoesNotThrow(() -> userService.registerUser(dto));
         }
 
         @Test
@@ -194,10 +186,8 @@ public class RegisterUserTests {
         public void createWithNull() {
             dto.setPassword(null);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Password not set");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Password not set");
         }
 
         @Test
@@ -205,10 +195,8 @@ public class RegisterUserTests {
         public void createWithTooShort() {
             dto.setPassword("1234");
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Password is too short");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Password is too short");
         }
 
         @ParameterizedTest
@@ -220,13 +208,11 @@ public class RegisterUserTests {
             dto.setPassword(password);
 
             if(passwordLength >= MIN_PASSWORD_LENGTH) {
-                org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+                assertDoesNotThrow(() -> userService.registerUser(dto));
             }
             else {
-                BadRequestException e =
-                        org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-                Assertions.assertThat(e)
-                        .hasMessage("Password is too short");
+                BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+                Assertions.assertThat(e).hasMessage("Password is too short");
             }
         }
 
@@ -238,7 +224,7 @@ public class RegisterUserTests {
             dto.setPassword(password);
 
             BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+                    assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
             Assertions.assertThat(e)
                     .hasMessage("Password is too weak");
         }
@@ -250,10 +236,8 @@ public class RegisterUserTests {
         public void createWithPasswordContainingUserData(String password) {
             dto.setPassword(password);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Password must not contain user data");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Password must not contain user data");
         }
 
         @ParameterizedTest
@@ -264,10 +248,8 @@ public class RegisterUserTests {
             dto.setFirstName("Максим");
             dto.setLastName("Муратов");
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Password must not contain user data");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Password must not contain user data");
         }
     }
 
@@ -279,7 +261,7 @@ public class RegisterUserTests {
         public void createWithValidValue(String firstName) {
             dto.setFirstName(firstName);
 
-            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+            assertDoesNotThrow(() -> userService.registerUser(dto));
         }
 
         @ParameterizedTest
@@ -290,10 +272,10 @@ public class RegisterUserTests {
             dto.setFirstName("A".repeat(firstNameLength));
 
             if(firstNameLength <= MAX_FIRST_NAME_LENGTH) {
-                org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+                assertDoesNotThrow(() -> userService.registerUser(dto));
             }
             else {
-                org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+                assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
             }
         }
 
@@ -302,10 +284,8 @@ public class RegisterUserTests {
         public void createWithNull() {
             dto.setFirstName(null);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("First name not set");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("First name not set");
         }
 
         @Test
@@ -313,10 +293,8 @@ public class RegisterUserTests {
         public void createWithEmpty() {
             dto.setFirstName("");
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("First name not set");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("First name not set");
         }
 
         @Test
@@ -324,10 +302,8 @@ public class RegisterUserTests {
         public void createWithTooLong() {
             dto.setFirstName("A".repeat(30));
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("First name too long");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("First name too long");
         }
 
         @ParameterizedTest
@@ -336,10 +312,8 @@ public class RegisterUserTests {
         public void createWithIllegalSymbols(String username) {
             dto.setFirstName(username);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("First name contains illegal symbols");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("First name contains illegal symbols");
         }
     }
 
@@ -351,7 +325,7 @@ public class RegisterUserTests {
         public void createWithValidValue(String lastName) {
             dto.setLastName(lastName);
 
-            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+            assertDoesNotThrow(() -> userService.registerUser(dto));
         }
 
         @ParameterizedTest
@@ -362,10 +336,10 @@ public class RegisterUserTests {
             dto.setLastName("A".repeat(lastNameLength));
 
             if(lastNameLength <= MAX_FIRST_NAME_LENGTH) {
-                org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+                assertDoesNotThrow(() -> userService.registerUser(dto));
             }
             else {
-                org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+                assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
             }
         }
 
@@ -374,10 +348,8 @@ public class RegisterUserTests {
         public void createWithNull() {
             dto.setLastName(null);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Last name not set");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Last name not set");
         }
 
         @Test
@@ -385,10 +357,8 @@ public class RegisterUserTests {
         public void createWithEmpty() {
             dto.setLastName("");
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Last name not set");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Last name not set");
         }
 
         @Test
@@ -396,10 +366,8 @@ public class RegisterUserTests {
         public void createWithTooLong() {
             dto.setLastName("A".repeat(30));
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Last name too long");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Last name too long");
         }
 
         @ParameterizedTest
@@ -408,10 +376,8 @@ public class RegisterUserTests {
         public void createWithIllegalSymbols(String username) {
             dto.setLastName(username);
 
-            BadRequestException e =
-                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
-            Assertions.assertThat(e)
-                    .hasMessage("Last name contains illegal symbols");
+            BadRequestException e = assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e).hasMessage("Last name contains illegal symbols");
         }
     }
 
