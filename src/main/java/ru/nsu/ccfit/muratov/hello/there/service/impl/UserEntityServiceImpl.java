@@ -34,6 +34,7 @@ public class UserEntityServiceImpl implements UserEntityService {
     private static final int MIN_USERNAME_LENGTH = 5;
     private static final int MAX_USERNAME_LENGTH = 20;
     private static final int MIN_PASSWORD_LENGTH = 10;
+    private static final int MAX_FIRST_NAME_LENGTH = 20;
 
     public UserEntityServiceImpl(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -45,11 +46,10 @@ public class UserEntityServiceImpl implements UserEntityService {
     @Override
     public UserEntity registerUser(RegistrationRequestDto form) throws BadRequestException {
         String username = form.getUsername();
-        validateUsername(username);
 
         UserEntity user = new UserEntity();
-        user.setUsername(username);
-        user.setFirstName(form.getFirstName());
+        setUsername(user, username);
+        setFirstName(user, form.getFirstName());
         user.setLastName(form.getLastName());
         user.setRegistrationTime(new Date());
         user.setBirthday(form.getBirthday());
@@ -121,7 +121,7 @@ public class UserEntityServiceImpl implements UserEntityService {
         user.setPassword(passwordEncoder.encode(password));
     }
 
-    private void validateUsername(String username) throws BadRequestException {
+    private void setUsername(UserEntity user, String username) throws BadRequestException {
         if(username == null) {
             throw new BadRequestException("Username not set");
         }
@@ -137,5 +137,19 @@ public class UserEntityServiceImpl implements UserEntityService {
         if(userRepository.existsByUsernameIgnoreCase(username)) {
             throw new BadRequestException("Username is already taken");
         }
+        user.setUsername(username);
+    }
+
+    private void setFirstName(UserEntity user, String firstName) throws BadRequestException {
+        if(firstName == null || firstName.isEmpty()) {
+            throw new BadRequestException("First name not set");
+        }
+        if(firstName.length() > MAX_USERNAME_LENGTH) {
+            throw new BadRequestException("First name too long");
+        }
+        if(!Pattern.matches("[A-Za-zА-Яа-яЁё]*", firstName)) {
+            throw new BadRequestException("First name contains illegal symbols");
+        }
+        user.setFirstName(firstName);
     }
 }
