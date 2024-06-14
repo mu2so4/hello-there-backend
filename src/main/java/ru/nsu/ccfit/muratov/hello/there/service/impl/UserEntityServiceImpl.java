@@ -50,7 +50,7 @@ public class UserEntityServiceImpl implements UserEntityService {
         UserEntity user = new UserEntity();
         setUsername(user, username);
         setFirstName(user, form.getFirstName());
-        user.setLastName(form.getLastName());
+        setLastName(user, form.getLastName());
         user.setRegistrationTime(new Date());
         user.setBirthday(form.getBirthday());
         setPassword(user, form.getPassword());
@@ -151,5 +151,18 @@ public class UserEntityServiceImpl implements UserEntityService {
             throw new BadRequestException("First name contains illegal symbols");
         }
         user.setFirstName(firstName);
+    }
+
+    private void setLastName(UserEntity user, String lastName) throws BadRequestException {
+        if(lastName == null || lastName.isEmpty()) {
+            throw new BadRequestException("Last name not set");
+        }
+        if(lastName.length() > MAX_USERNAME_LENGTH) {
+            throw new BadRequestException("Last name too long");
+        }
+        if(!Pattern.matches("[A-Za-zА-Яа-яЁё\\-]*", lastName)) {
+            throw new BadRequestException("Last name contains illegal symbols");
+        }
+        user.setLastName(lastName);
     }
 }

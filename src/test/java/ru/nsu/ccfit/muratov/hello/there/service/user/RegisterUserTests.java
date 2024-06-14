@@ -85,7 +85,7 @@ public class RegisterUserTests {
         @ParameterizedTest
         @ValueSource(strings = {"mu2so4", "Mu2SO4", "maxim_muratov", "_____"})
         @DisplayName("Create with valid username")
-        public void createWithValidUsernames(String username) {
+        public void createWithValidValue(String username) {
             dto.setUsername(username);
             when(userRepository.save(any(UserEntity.class))).thenAnswer((invocation) -> {
                 UserEntity savedUser = invocation.getArgument(0, UserEntity.class);
@@ -100,7 +100,7 @@ public class RegisterUserTests {
         @ParameterizedTest
         @ValueSource(ints = {4, 5, 6, 19, 20, 21})
         @DisplayName("Create with username having different lengths")
-        public void createVarious(int usernameLength) {
+        public void createWithVariousLengths(int usernameLength) {
             final int MIN_USERNAME_LENGTH = 5;
             final int MAX_USERNAME_LENGTH = 20;
             String username = "A".repeat(usernameLength);
@@ -116,7 +116,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create new user with null username")
-        public void createWithNullUserName() {
+        public void createWithNull() {
             dto.setUsername(null);
 
             BadRequestException e =
@@ -127,7 +127,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create new user with too long username")
-        public void createWithTooLongUserName() {
+        public void createWithTooLong() {
             dto.setUsername("A".repeat(25));
 
             BadRequestException e =
@@ -138,7 +138,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create new user with too short username")
-        public void createWithTooShortUserName() {
+        public void createWithTooShort() {
             dto.setUsername("A");
 
             BadRequestException e =
@@ -162,7 +162,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create with username that was taken")
-        public void createWithTakenUsername() throws BadRequestException, ParseException {
+        public void createWithTaken() throws BadRequestException, ParseException {
             String takenUsername = "Mu2SO4";
             dto.setUsername(takenUsername);
             userService.registerUser(dto);
@@ -183,7 +183,7 @@ public class RegisterUserTests {
         @ParameterizedTest
         @ValueSource(strings = {"veryDifficultPassword", "Невероятно сложный пароль", "Passw0RD.?", "🌐🛑🥷🤗⬆️🌋"})
         @DisplayName("Create with valid password")
-        public void createWithValidPassword(String password) {
+        public void createWithValidValue(String password) {
             dto.setPassword(password);
 
             org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
@@ -191,7 +191,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create with null password")
-        public void createWithNullPassword() {
+        public void createWithNull() {
             dto.setPassword(null);
 
             BadRequestException e =
@@ -202,7 +202,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create with too short password")
-        public void createWithTooShortPassword() {
+        public void createWithTooShort() {
             dto.setPassword("1234");
 
             BadRequestException e =
@@ -214,7 +214,7 @@ public class RegisterUserTests {
         @ParameterizedTest
         @ValueSource(ints = {9, 10, 11})
         @DisplayName("Create with password with different lengths")
-        public void createWithPasswordWithDiffLengths(int passwordLength) {
+        public void createWithVariousLengths(int passwordLength) {
             final int MIN_PASSWORD_LENGTH = 10;
             String password = "A".repeat(passwordLength);
             dto.setPassword(password);
@@ -274,9 +274,9 @@ public class RegisterUserTests {
     @Nested
     public class FirstNameTest {
         @ParameterizedTest
-        @ValueSource(strings = {"Maxim", "Максим", "Ян", "Si", "макс", "john", "Алёна", "Ёдгор", "Я"})
+        @ValueSource(strings = {"Maxim", "Максим", "Ян", "Si", "макс", "john", "Алёна", "Ёдгор", "Я", "RЯ"})
         @DisplayName("Create with valid first name")
-        public void createWithValidFirstName(String firstName) {
+        public void createWithValidValue(String firstName) {
             dto.setFirstName(firstName);
 
             org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
@@ -284,8 +284,8 @@ public class RegisterUserTests {
 
         @ParameterizedTest
         @ValueSource(ints = {19, 20, 21})
-        @DisplayName("Create with password with different lengths")
-        public void createWithPasswordWithDiffLengths(int firstNameLength) {
+        @DisplayName("Create with last name with different lengths")
+        public void createWithVariousLengths(int firstNameLength) {
             final int MAX_FIRST_NAME_LENGTH = 20;
             dto.setFirstName("A".repeat(firstNameLength));
 
@@ -299,7 +299,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create with null first name")
-        public void createWithNullFirstName() {
+        public void createWithNull() {
             dto.setFirstName(null);
 
             BadRequestException e =
@@ -310,7 +310,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create with empty first name")
-        public void createWithEmptyFirstName() {
+        public void createWithEmpty() {
             dto.setFirstName("");
 
             BadRequestException e =
@@ -321,7 +321,7 @@ public class RegisterUserTests {
 
         @Test
         @DisplayName("Create with too long first name")
-        public void createWithTooLongFirstName() {
+        public void createWithTooLong() {
             dto.setFirstName("A".repeat(30));
 
             BadRequestException e =
@@ -340,6 +340,78 @@ public class RegisterUserTests {
                     org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
             Assertions.assertThat(e)
                     .hasMessage("First name contains illegal symbols");
+        }
+    }
+
+    @Nested
+    public class LastNameTest {
+        @ParameterizedTest
+        @ValueSource(strings = {"Муратов", "Muratov", "Ohm", "muratov", "Селезнёва", "Ёдгорова", "Я", "RЯ", "Муратов-Иванов"})
+        @DisplayName("Create with valid last name")
+        public void createWithValidValue(String lastName) {
+            dto.setLastName(lastName);
+
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = {19, 20, 21})
+        @DisplayName("Create with last name with different lengths")
+        public void createWithVariousLengths(int lastNameLength) {
+            final int MAX_FIRST_NAME_LENGTH = 20;
+            dto.setLastName("A".repeat(lastNameLength));
+
+            if(lastNameLength <= MAX_FIRST_NAME_LENGTH) {
+                org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> userService.registerUser(dto));
+            }
+            else {
+                org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            }
+        }
+
+        @Test
+        @DisplayName("Create with null last name")
+        public void createWithNull() {
+            dto.setLastName(null);
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Last name not set");
+        }
+
+        @Test
+        @DisplayName("Create with empty last name")
+        public void createWithEmpty() {
+            dto.setLastName("");
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Last name not set");
+        }
+
+        @Test
+        @DisplayName("Create with too long last name")
+        public void createWithTooLong() {
+            dto.setLastName("A".repeat(30));
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Last name too long");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {" ", "_Муратов_", "Муратов\n", "Муратов?", "muratov_", "\t"})
+        @DisplayName("Create with last name having illegal symbols")
+        public void createWithIllegalSymbols(String username) {
+            dto.setLastName(username);
+
+            BadRequestException e =
+                    org.junit.jupiter.api.Assertions.assertThrows(BadRequestException.class, () -> userService.registerUser(dto));
+            Assertions.assertThat(e)
+                    .hasMessage("Last name contains illegal symbols");
         }
     }
 
