@@ -11,7 +11,7 @@ import ru.nsu.ccfit.muratov.hello.there.exception.BadRequestException;
 import ru.nsu.ccfit.muratov.hello.there.exception.UserNotFoundException;
 
 public interface UserEntityService {
-    UserEntity registerUser(RegistrationRequestDto form);
+    UserEntity registerUser(RegistrationRequestDto form) throws BadRequestException;
 
     UserEntity getUserByUserDetails(UserDetails userDetails);
     UserEntity getById(Integer userId) throws UserNotFoundException;

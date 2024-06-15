@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.nsu.ccfit.muratov.hello.there.dto.group.GroupCreateRequestDto;
 import ru.nsu.ccfit.muratov.hello.there.entity.Group;
 import ru.nsu.ccfit.muratov.hello.there.entity.UserEntity;
-import ru.nsu.ccfit.muratov.hello.there.entity.id.GroupBlacklistId;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupBlacklistRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.GroupRepository;
 import ru.nsu.ccfit.muratov.hello.there.repository.SubscriptionRepository;
@@ -54,7 +53,7 @@ public class GroupServiceTests {
             savedGroup.setId(groupId);
             return savedGroup;
         });
-        when(groupBlacklistRepository.existsById(any(GroupBlacklistId.class))).thenReturn(false);
+        //when(groupBlacklistRepository.existsById(any(GroupBlacklistId.class))).thenReturn(false);
 
         Group savedGroup = groupService.create(dto, userRepository.getReferenceById(userId));
 

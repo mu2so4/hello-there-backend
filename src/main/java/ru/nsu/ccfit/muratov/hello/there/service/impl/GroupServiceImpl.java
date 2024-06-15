@@ -1,6 +1,5 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,14 +25,20 @@ import java.util.List;
 
 @Service
 public class GroupServiceImpl implements GroupService {
-    @Autowired
-    private GroupRepository groupRepository;
-    @Autowired
-    private GroupBlacklistRepository groupBlacklistRepository;
-    @Autowired
-    private UserEntityService userService;
-    @Autowired
-    private SubscriptionRepository subscriptionRepository;
+    private final GroupRepository groupRepository;
+    private final GroupBlacklistRepository groupBlacklistRepository;
+    private final UserEntityService userService;
+    private final SubscriptionRepository subscriptionRepository;
+
+    public GroupServiceImpl(GroupRepository groupRepository,
+                            GroupBlacklistRepository groupBlacklistRepository,
+                            UserEntityService userService,
+                            SubscriptionRepository subscriptionRepository) {
+        this.groupRepository = groupRepository;
+        this.groupBlacklistRepository = groupBlacklistRepository;
+        this.userService = userService;
+        this.subscriptionRepository = subscriptionRepository;
+    }
 
     @Override
     public Group getById(Integer id) throws GroupNotFoundException {

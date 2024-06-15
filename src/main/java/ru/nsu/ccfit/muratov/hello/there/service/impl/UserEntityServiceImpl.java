@@ -1,6 +1,5 @@
 package ru.nsu.ccfit.muratov.hello.there.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,29 +20,40 @@ import ru.nsu.ccfit.muratov.hello.there.service.UserEntityService;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Service
 public class UserEntityServiceImpl implements UserEntityService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private UserBlacklistRepository userBlacklistRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final UserBlacklistRepository userBlacklistRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private static final String USER_ROLE_NAME = "USER";
+    private static final int MIN_USERNAME_LENGTH = 5;
+    private static final int MAX_USERNAME_LENGTH = 20;
+    private static final int MIN_PASSWORD_LENGTH = 10;
+    private static final int MAX_FIRST_NAME_LENGTH = 20;
+
+    public UserEntityServiceImpl(UserRepository userRepository, UserBlacklistRepository userBlacklistRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.userBlacklistRepository = userBlacklistRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
-    public UserEntity registerUser(RegistrationRequestDto form) {
+    public UserEntity registerUser(RegistrationRequestDto form) throws BadRequestException {
+        String username = form.getUsername();
+
         UserEntity user = new UserEntity();
-        user.setUsername(form.getUsername());
-        setPassword(user, form.getPassword());
-        user.setFirstName(form.getFirstName());
-        user.setLastName(form.getLastName());
+        setUsername(user, username);
+        setFirstName(user, form.getFirstName());
+        setLastName(user, form.getLastName());
         user.setRegistrationTime(new Date());
         user.setBirthday(form.getBirthday());
+        setPassword(user, form.getPassword());
         user.setRoles(Collections.singleton(roleRepository.findByName(USER_ROLE_NAME))); //fixme to mutable set
         return userRepository.save(user);
     }
@@ -95,7 +105,64 @@ public class UserEntityServiceImpl implements UserEntityService {
         return isBlacklistedByUser(user1, user2) || isBlacklistedByUser(user2, user1);
     }
 
-    private void setPassword(UserEntity user, String password) {
+    private void setPassword(UserEntity user, String password) throws BadRequestException {
+        if(password == null) {
+            throw new BadRequestException("Password not set");
+        }
+        if(password.length() < MIN_PASSWORD_LENGTH) {
+            throw new BadRequestException("Password is too short");
+        }
+        String passwordLowerCase = password.toLowerCase(Locale.ROOT);
+        if(passwordLowerCase.contains(user.getUsername().toLowerCase(Locale.ROOT)) ||
+                passwordLowerCase.contains(user.getFirstName().toLowerCase(Locale.ROOT)) ||
+                passwordLowerCase.contains(user.getLastName().toLowerCase(Locale.ROOT))) {
+            throw new BadRequestException("Password must not contain user data");
+        }
         user.setPassword(passwordEncoder.encode(password));
+    }
+
+    private void setUsername(UserEntity user, String username) throws BadRequestException {
+        if(username == null) {
+            throw new BadRequestException("Username not set");
+        }
+        if(!Pattern.matches("[A-Za-z0-9_]*", username)) {
+            throw new BadRequestException("Illegal symbols in username");
+        }
+        if(username.length() > MAX_USERNAME_LENGTH) {
+            throw new BadRequestException("Username too long");
+        }
+        if(username.length() < MIN_USERNAME_LENGTH) {
+            throw new BadRequestException("Username too short");
+        }
+        if(userRepository.existsByUsernameIgnoreCase(username)) {
+            throw new BadRequestException("Username is already taken");
+        }
+        user.setUsername(username);
+    }
+
+    private void setFirstName(UserEntity user, String firstName) throws BadRequestException {
+        if(firstName == null || firstName.isEmpty()) {
+            throw new BadRequestException("First name not set");
+        }
+        if(firstName.length() > MAX_USERNAME_LENGTH) {
+            throw new BadRequestException("First name too long");
+        }
+        if(!Pattern.matches("[A-Za-zА-Яа-яЁё]*", firstName)) {
+            throw new BadRequestException("First name contains illegal symbols");
+        }
+        user.setFirstName(firstName);
+    }
+
+    private void setLastName(UserEntity user, String lastName) throws BadRequestException {
+        if(lastName == null || lastName.isEmpty()) {
+            throw new BadRequestException("Last name not set");
+        }
+        if(lastName.length() > MAX_USERNAME_LENGTH) {
+            throw new BadRequestException("Last name too long");
+        }
+        if(!Pattern.matches("[A-Za-zА-Яа-яЁё\\-]*", lastName)) {
+            throw new BadRequestException("Last name contains illegal symbols");
+        }
+        user.setLastName(lastName);
     }
 }
