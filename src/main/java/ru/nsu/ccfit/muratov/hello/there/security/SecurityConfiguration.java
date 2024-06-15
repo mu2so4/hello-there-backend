@@ -1,24 +1,28 @@
-package ru.nsu.ccfit.muratov.hello.there.configuration;
+package ru.nsu.ccfit.muratov.hello.there.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import ru.nsu.ccfit.muratov.hello.there.service.CustomUserDetailsService;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfiguration {
     @Autowired
-    private UserDetailsServiceImpl userDetailsService;
+    private CustomUserDetailsService userDetailsService;
+    @Autowired
+    private JwtAuthEntryPoint authEntryPoint;
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
@@ -31,24 +35,33 @@ public class SecurityConfiguration {
         return configuration.getAuthenticationManager();
     }
 
+    @Bean
+    public JwtAuthFilter jwtAuthFilter() {
+        return new JwtAuthFilter();
+    }
+
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling((authorize) ->
+                        authorize.authenticationEntryPoint(authEntryPoint)
+                )
                 .authorizeHttpRequests((authorize) ->
                         authorize
                                 .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
                                 .anyRequest().authenticated()
-                                /*.requestMatchers(HttpMethod.POST, "/api/users", "/api/session", "/session").permitAll()
-                                .requestMatchers( "/", "/swagger-ui/index.html").permitAll()
-                                .anyRequest().authenticated()*/
                 )
-                .httpBasic(Customizer.withDefaults());
+                .sessionManagement((authorize) ->
+                        authorize.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .httpBasic(Customizer.withDefaults())
+                .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
+                //.logout((logout) -> logout.logoutUrl("/api/auth/logout"));
                 /*.formLogin(form ->
                         form.loginPage("/session")
                         .permitAll());*/
-
         return http.build();
     }
 }

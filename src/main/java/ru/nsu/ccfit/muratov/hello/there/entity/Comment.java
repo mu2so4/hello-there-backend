@@ -6,22 +6,23 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-@Entity(name = "Groups")
-public class Group {
+@Entity(name = "Comments")
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false)
-    private String name;
-    @Column(nullable = false)
-    private String description;
+    private String content;
     @Column(nullable = false)
     private Date createTime;
-    @Column(nullable = false)
-    private boolean isDeleted;
+    private Date lastEditTime;
 
     @ManyToOne
-    @JoinColumn(name = "owner", nullable = false)
-    private UserEntity owner;
+    @JoinColumn(name = "post", nullable = false)
+    private Post post;
+
+    @ManyToOne
+    @JoinColumn(name = "commenter", nullable = false)
+    private UserEntity commenter;
 }
