@@ -52,7 +52,9 @@ public class MessageServiceImpl implements MessageService {
         }
 
         Message message = new Message();
-        message.setRepliedMessage(getById(dto.getRepliedMessageId()));
+        if(dto.getRepliedMessageId() != null) {
+            message.setRepliedMessage(getById(dto.getRepliedMessageId()));
+        }
         message.setContent(dto.getContent());
         message.setSendTime(new Date());
         message.setSender(sender);
